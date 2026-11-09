@@ -1298,7 +1298,6 @@ document.addEventListener('click',function(e){
   else if(a==='erest') openRest(parseInt(b.dataset.i,10));
   else if(a==='restdef') openRestDefault();
   else if(a==='clockmode'){clockMode=(v==='1');try{localStorage.setItem('wl-clock',v);}catch(x){}renderSettings();}
-  else if(a==='clocktest') openClock(10);
   else if(a==='lockmode'){lockMode=(v==='1');try{localStorage.setItem('wl-lockmode',v);}catch(x){}renderSettings();}
   else if(a==='tedit') openEdit(v);
   else if(a==='tdel'){pickDel=v;renderPickList();}
@@ -1473,7 +1472,7 @@ function kInit(){
   };
   kaudio=new Audio(); kaudio.loop=true; kaudio.setAttribute('playsinline',''); kaudio.preload='auto';
 }
-var clockMode=(function(){try{return localStorage.getItem('wl-clock')==='1';}catch(e){return false;}})();
+var clockMode=(function(){try{return localStorage.getItem('wl-clock')!=='0';}catch(e){return true;}})();
 function openClock(sec){
   var u='shortcuts://run-shortcut?name='+encodeURIComponent('RestTimer')+'&input=text&text='+encodeURIComponent(String(sec));
   var ok=false;
@@ -1806,7 +1805,6 @@ function renderSettings(){
     '<div class="sgroup"><div class="sname">'+T('מנוחה בין סטים ברירת מחדל')+'</div><div style="margin-top:10px"><button type="button" class="btn ghost" data-act="restdef" style="min-width:120px">'+(defRest?fmtRest(defRest):T('ללא'))+'</button></div></div>'+
     '<div class="sgroup"><div class="sname">'+T('טיימר שעון (קיצורי דרך)')+'</div>'+
     '<div class="seg" role="group">'+[['0','כבוי'],['1','פעיל']].map(function(x){var on=(x[0]==='1')===clockMode;return '<button type="button" class="segb'+(on?' on':'')+'" data-act="clockmode" data-v="'+x[0]+'" aria-pressed="'+on+'">'+T(x[1])+'</button>';}).join('')+'</div>'+
-    '<div style="margin-top:10px"><button type="button" class="btn ghost" data-act="clocktest">'+T('בדיקה (10 שניות)')+'</button></div>'+
     '<p class="sdesc mdesc" dir="auto">'+(lang==='en'?'Needs a shortcut named RestTimer: Shortcuts app, new shortcut, action Start Timer, duration = Shortcut Input, unit seconds. If it does not accept the input, add Get Numbers from Input first.':' צריך קיצור בשם RestTimer: באפליקציית קיצורי הדרך קיצור חדש, פעולה "Start Timer" (התחל טיימר), משך = "Shortcut Input" (קלט הקיצור), יחידה = שניות. אם לא מתקבל, הוסף לפניו "Get Numbers from Input".')+'</p></div>'+
     '<div class="sgroup"><div class="sname">'+T('טיימר בנעילת מסך')+'</div>'+
     '<div class="seg" role="group">'+[['0','כבוי'],['1','פעיל']].map(function(x){var on=(x[0]==='1')===lockMode;return '<button type="button" class="segb'+(on?' on':'')+'" data-act="lockmode" data-v="'+x[0]+'" aria-pressed="'+on+'">'+T(x[1])+'</button>';}).join('')+'</div>'+
