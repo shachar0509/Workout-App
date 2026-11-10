@@ -1093,7 +1093,7 @@ var HE_SC={shoulders:'כתפיים',forearms:'אמות',biceps:'יד קדמית'
 function cap(s){return String(s).replace(/(^|[\s\-\/(])([a-z])/g,function(m,a,b){return a+b.toUpperCase();});}
 function lz(map,k){return lang==='he'&&map[k]?map[k]:cap(k);}
 Object.assign(EN,{'חיפוש תרגיל':'Search exercises','סינון':'Filter','לפי קבוצת שריר':'By muscle group','לפי ציוד':'By equipment','התרגילים שלי':'My exercises','סנן':'Apply','אפס':'Reset','הצג עוד':'Show more','לא נמצאו תרגילים':'No exercises found','סרטון':'Video','מידע על התרגיל':'Exercise info','הוראות':'Instructions','פרופיל':'Profile','קבוצת שריר יעד':'Target Muscle Group','אזור בגוף':'Body Part','ציוד נדרש':'Equipment Required','שרירים משניים':'Secondary Muscles','ההוראות זמינות באנגלית בלבד':'Instructions are available in English only','אין סרטון לתרגיל הזה.':'No video for this exercise.','תרגיל שיצרת, אין עליו מידע נוסף.':'A custom exercise: no extra info.','לא ניתן לטעון את הסרטון.':'Could not load the video.'});
-var EXD=null, EXMAP={}, EXH={}, EXTHUMB={};
+var EXD=null, EXMAP={}, EXH={}, EXTHUMB={}, EXK={};
 function exOf(n){return EXD?(EXMAP[nameKey(n)]||null):null;}
 function dispName(n){if(lang==='he'){var h=EXH[nameKey(n)];if(h) return h;}return n;}
 function exImg(x){return EXD.u+'images/'+x.m+'.jpg';}
@@ -1104,8 +1104,9 @@ function exBtns(n){
     '<button type="button" class="xib" data-act="exinfo" data-n="'+a+'" aria-label="'+T('מידע על התרגיל')+'" title="'+T('מידע על התרגיל')+'">'+IC_INFO+'</button></span>';
 }
 function exInit(d){
-  EXD=d; EXMAP={}; EXH={}; EXTHUMB={};
-  d.x.forEach(function(x){var k=nameKey(x.n);EXMAP[k]=x;if(x.h) EXH[k]=x.h;if(!EXTHUMB[x.t]) EXTHUMB[x.t]=x;});
+  EXD=d; EXMAP={}; EXH={}; EXTHUMB={}; EXK={};
+  d.x.forEach(function(x){var k=nameKey(x.n);EXMAP[k]=x;if(x.h) EXH[k]=x.h;if(x.k) EXK[k]=x.k;if(!EXTHUMB[x.t]) EXTHUMB[x.t]=x;});
+  Object.keys(d.hk||{}).forEach(function(n){EXK[nameKey(n)]=d.hk[n];});
   Object.keys(d.h||{}).forEach(function(n){EXH[nameKey(n)]=d.h[n];});
   try{render();renderPlan();if(modal&&modal.kind==='edit') renderEdit();if(scr==='prog') renderProg();}catch(e){}
 }
@@ -1212,7 +1213,7 @@ function libItems(){
   libExtra.forEach(function(e){if(!m[e.key]) m[e.key]=e.name;});
   if(EXD) EXD.x.forEach(function(x){var k=nameKey(x.n);if(!m[k]) m[k]=x.n;});
   return Object.keys(m).filter(function(k){return !used[k];}).map(function(k){return {key:k,name:m[k]};})
-    .sort(function(a,b){return cmpNames(dispName(a.name),dispName(b.name));});
+    .sort(function(a,b){return (EXK[b.key]||0)-(EXK[a.key]||0)||cmpNames(dispName(a.name),dispName(b.name));});
 }
 function pickId(key){
   var m=buildIdMap(), used={};
