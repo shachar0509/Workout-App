@@ -114,6 +114,7 @@ td.set.dash{color:#4a4d55;font:600 24px var(--display)}
 .note{font-size:13px;color:var(--muted);margin:12px 0 0}
 .empty{padding:32px 16px;text-align:center;border:1px dashed var(--edge);border-radius:16px;background:linear-gradient(180deg,var(--card-a),var(--card-b));display:flex;flex-direction:column;gap:14px;align-items:center}
 .empty p{margin:0}
+.empty[hidden]{display:none}
 
 .scrim{position:fixed;inset:0;z-index:50;background:var(--scrim);display:flex;align-items:flex-end;justify-content:center;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 .scrim[hidden]{display:none!important}
@@ -1538,7 +1539,7 @@ function restTick(){
   updateRing(left);
 }
 function startRest(sec,name){
-  stopRest(); restEnd=Date.now()+sec*1000; restTotal=sec; restName=name||''; armKeepAlive(); if(clockMode) openClock(sec);
+  stopRest(); restEnd=Date.now()+sec*1000; restTotal=sec; restName=name||''; if(clockMode){try{openClock(sec);}catch(e){}} try{armKeepAlive();}catch(e){}
   restTick(); restT=setInterval(restTick,250);
 }
 function maybeStartRest(wid,ex){
