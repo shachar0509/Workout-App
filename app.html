@@ -1167,7 +1167,6 @@ function renderLibItems(){
     (items.length?items.map(function(it){
       var x=exOf(it.name);
       return '<div class="lrow"><button type="button" class="wrow'+(libSel[it.key]?' sel':'')+'" data-act="lpick" data-v="'+esc(it.key)+'">'+
-        (x?'<img loading="lazy" decoding="async" alt="" src="'+esc(exImg(x))+'">':'')+
         '<span class="wn"><b dir="auto">'+esc(dispName(it.name))+'</b>'+(x?'<small>'+esc(lz(HE_MU,EXD.mu[x.t]))+'</small>':'')+'</span></button>'+exBtns(it.name)+'</div>';
     }).join(''):'<p class="note">'+T('לא נמצאו תרגילים')+'</p>')+
     (all.length>items.length?'<button type="button" class="btn ghost lmore" data-act="lmore">'+T('הצג עוד')+'</button>':'');
