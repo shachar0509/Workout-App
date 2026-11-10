@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Build exercises-data.json from hasaneyldrm/exercises-dataset (data/exercises.json) + Hebrew names.
 Media (images/GIFs) is NOT copied: the app hot-links it at the pinned commit (c) from raw.githubusercontent.com.
-Usage: python3 -I tools/build_exlib.py <dataset/data/exercises.json> <he_names.json: name -> {h, i} or name -> str> <commit_sha> <out.json> [scores.json: name -> {p, c}]
+Usage: python3 -I tools/build_exlib.py <dataset/data/exercises.json> <he_names.json: name -> {h, i} or name -> str> <commit_sha> <out.json> [scores.json: name -> {p, c}] [classes.json: name -> {k, w}]
 Score k (0-100) = 7*popularity + 3*translation-confidence (both 1-10); the app lists exercises by k, highest first."""
 import json, re, sys
 
 src, hef, sha, out = sys.argv[1:5]
 sc = json.load(open(sys.argv[5], encoding='utf-8')) if len(sys.argv) > 5 else {}
+cl = json.load(open(sys.argv[6], encoding='utf-8')) if len(sys.argv) > 6 else {}  # name -> {k: keep, w: needs working weight}
 score = lambda n: round(0.7 * sc[n]['p'] * 10 + 0.3 * sc[n]['c'] * 10) if n in sc else 0
 d = json.load(open(src, encoding='utf-8'))
 he = json.load(open(hef, encoding='utf-8'))
@@ -22,6 +23,7 @@ for e in d:
     n = title(e['name'])
     if n.lower() in seen: continue
     seen.add(n.lower())
+    if cl and not cl.get(n, {}).get('k', True): continue  # not tracked as sets x reps (cardio, holds, stretches ...)
     x = {'n': n, 'm': e['media_id'] and f"{e['id']}-{e['media_id']}",
          't': T.index(e['target']), 'e': Q.index(e['equipment']), 'b': B.index(e['body_part']),
          's': [s for s in e.get('secondary_muscles', []) if s],
@@ -30,6 +32,7 @@ for e in d:
     if isinstance(t, str): t = {'h': t}
     if t and t.get('h'): x['h'] = t['h']
     if t and t.get('i'): x['ih'] = t['i']  # Hebrew steps (rewritten, not 1:1 with the English)
+    if cl and not cl.get(n, {}).get('w', True): x['w'] = 0  # no working weight (bodyweight / bands)
     if score(n): x['k'] = score(n)
     xs.append(x)
 base = {x['n'].lower() for x in xs}
