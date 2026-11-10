@@ -48,7 +48,6 @@ h1{font:800 34px/1.1 var(--body);margin:0;letter-spacing:.01em;color:#e9ebef;tex
 .status.err::before,.status.warn::before{background:var(--danger);
   -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7.5v5.5M12 16.5h.01'/%3E%3C/svg%3E") center/contain no-repeat;
   mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7.5v5.5M12 16.5h.01'/%3E%3C/svg%3E") center/contain no-repeat}
-.note-mode{font-size:13px;color:var(--muted);margin:-8px 0 14px}
 
 .weekbar{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .lbl{font-size:15px;color:var(--muted);flex:none}
@@ -453,7 +452,6 @@ html.vsnap .xcard,html.vsnap .wcard{scroll-snap-align:start}
     <h1 data-t>יומן אימונים</h1>
     <span class="hright"><span id="status" class="status" role="status"></span><button type="button" class="hbtn" data-act="nav" data-v="set" aria-label="הגדרות" data-tal="הגדרות"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg></button></span>
   </header>
-  <p id="modeNote" class="note-mode" hidden data-t>הנתונים נשמרים רק בדפדפן הזה.</p>
   <div id="screenCur">
   <p id="loading" class="note" data-t>טוען…</p>
   <section id="empty" class="empty" hidden>
@@ -636,7 +634,7 @@ var STEP_KG=2.5;
 try{var savedStep=parseFloat(localStorage.getItem('wl-step'));if(savedStep===1.25||savedStep===2.5||savedStep===5) STEP_KG=savedStep;}catch(e){}
 var $=function(id){return document.getElementById(id)};
 var statusEl=$('status'), loadingEl=$('loading'),
-    emptyEl=$('empty'), viewEl=$('weekview'), head=$('wkhead'), tbl=$('tbl'), modeNote=$('modeNote'),
+    emptyEl=$('empty'), viewEl=$('weekview'), head=$('wkhead'), tbl=$('tbl'),
     scrim=$('scrim'), sheetAdd=$('sheetAdd'), sheetPlan=$('sheetPlan'), sheetNew=$('sheetNew'), sheetHelp=$('sheetHelp'), hTitle=$('hTitle'), hText=$('hText'), hClose=$('hClose'), sheetEdit=$('sheetEdit'), editList=$('editList'), eHint=$('eHint'), eAdd=$('eAdd'), eSave=$('eSave'), eCancel=$('eCancel'), eTitle=$('eTitle'), eName=$('eName'), eSub=$('eSub'), pickList=$('pickList'), nClose=$('nClose'), addbar=$('addbar'),
     fW=$('fW'), sR=$('sR'), sP=$('sP'), oR=$('oR'), oP=$('oP'), mTitle=$('mTitle'), mHint=$('mHint'),
     mSave=$('mSave'), mCancel=$('mCancel'), mDel=$('mDel'),
@@ -2096,7 +2094,6 @@ showScreen('list');
     loadTimer=setTimeout(function(){setStatus('warn');},10000);
   }else{
     store=makeLocal();
-    modeNote.hidden=false;
   }
   store.subscribe(onData,onErr);
   if(store.subTpl) store.subTpl(applyTpl);
