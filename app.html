@@ -1095,7 +1095,7 @@ function cmpNames(a,b){
 var IC_INFO='<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.8h.01"/></svg>';
 var IC_FILT='<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18l-7 8.5V20l-4-2v-5.5z"/></svg>';
 var HE_MU={abs:'בטן',pectorals:'חזה',biceps:'יד קדמית',glutes:'ישבן',delts:'כתפיים',triceps:'יד אחורית','upper back':'גב עליון',lats:'גב רחב (לאטס)',calves:'תאומים',quads:'ארבע ראשי',forearms:'אמות',hamstrings:'ירך אחורי',spine:'גב תחתון (זוקפים)',traps:'טרפזים',adductors:'מקרבי ירך','serratus anterior':'מסור קדמי',abductors:'מרחיקי ירך','levator scapulae':'טרפז עליון'};
-var HE_EQ={'body weight':'משקל גוף',dumbbell:'משקולות יד',cable:'כבלים',barbell:'מוט','leverage machine':'מכונה (לברג׳)',band:'גומיית התנגדות','smith machine':'מכונת סמית׳',kettlebell:'קטלבל',weighted:'עם משקל נוסף','stability ball':'כדור פיזיו','ez barbell':'מוט EZ',assisted:'בסיוע','sled machine':'מכונת מזחלת','medicine ball':'כדור כוח',rope:'חבל',roller:'רולר',  'resistance band':'גומיית התנגדות','olympic barbell':'מוט אולימפי','wheel roller':'גלגל בטן','upper body ergometer':'ארגומטר לפלג גוף עליון','skierg machine':'מכונת סקיארג',hammer:'פטיש','stationary bike':'אופני כושר',tire:'צמיג','trap bar':'מוט טרפז','elliptical machine':'אליפטיקל','stepmill machine':'מכונת מדרגות'};
+var HE_EQ={'body weight':'משקל גוף',dumbbell:'משקולות יד',cable:'כבלים',barbell:'מוט',machine:'מכונה',band:'גומיית התנגדות','smith machine':'מכונת סמית׳',kettlebell:'קטלבל',weighted:'עם משקל נוסף','stability ball':'כדור פיזיו','ez barbell':'מוט EZ',assisted:'בסיוע','medicine ball':'כדור כוח',rope:'חבל',roller:'רולר',  'olympic barbell':'מוט אולימפי','wheel roller':'גלגל בטן','upper body ergometer':'ארגומטר לפלג גוף עליון','skierg machine':'מכונת סקיארג',hammer:'פטיש','stationary bike':'אופני כושר',tire:'צמיג','trap bar':'מוט טרפז','elliptical machine':'אליפטיקל','stepmill machine':'מכונת מדרגות'};
 var HE_BP={'upper arms':'זרועות עליונות','upper legs':'רגליים עליונות',back:'גב',waist:'בטן ומותניים',chest:'חזה',shoulders:'כתפיים','lower legs':'רגליים תחתונות','lower arms':'אמות',cardio:'אירובי',neck:'צוואר'};
 var HE_SC={shoulders:'כתפיים',forearms:'אמות',biceps:'יד קדמית',triceps:'יד אחורית',hamstrings:'ירך אחורי',quadriceps:'ארבע ראשי',glutes:'ישבן',obliques:'אלכסוניים','hip flexors':'מכופפי ירך',chest:'חזה',trapezius:'טרפזים',traps:'טרפזים',deltoids:'כתפיים',calves:'תאומים',ankles:'קרסוליים',core:'ליבה','lower back':'גב תחתון','rotator cuff':'השרוול המסובב',soleus:'סוליאוס',rhomboids:'רומבואידים','wrist flexors':'מכופפי שורש כף היד','latissimus dorsi':'גב רחב',abdominals:'בטן','ankle stabilizers':'מייצבי קרסול','upper back':'גב עליון','wrist extensors':'פושטי שורש כף היד',lats:'גב רחב',wrists:'שורשי כפות הידיים',hands:'כפות ידיים'};
 function cap(s){return String(s).replace(/(^|[\s\-\/(])([a-z])/g,function(m,a,b){return a+b.toUpperCase();});}
@@ -1131,6 +1131,8 @@ function exLoad(){
 function emptyF(){return {m:{},e:{},mine:false,sec:false};}
 function cpF(f){return {m:Object.assign({},f.m),e:Object.assign({},f.e),mine:f.mine,sec:f.sec};}
 var cm={t:{},s:{},e:{},w:true};
+var EQ_ALIAS={'resistance band':'band','leverage machine':'machine','sled machine':'machine'};
+function eqn(a){return (a||[]).map(function(n){return EQ_ALIAS[n]||n;});}
 function exNeedsWeight(n){var x=exOf(n);if(x) return x.w!==0;var m=exMeta(nameKey(n));return !(m&&m.w===false);}
 function exMeta(k){var e=libByKey(k);return (e&&e.m)||libMeta[k]||null;}
 /* dataset secondary-muscle vocabulary -> target-muscle names used by the filter */
@@ -1138,7 +1140,7 @@ var SEC2T={shoulders:'delts',deltoids:'delts',forearms:'forearms',biceps:'biceps
 function exFacts(it){
   var x=exOf(it.name);
   if(x) return {t:[EXD.mu[x.t]],s:x.s.map(function(m){return SEC2T[m];}).filter(Boolean),e:[EXD.eq[x.e]]};
-  var m=exMeta(it.key); return m?{t:m.t||[],s:m.s||[],e:m.e||[]}:null;
+  var m=exMeta(it.key); return m?{t:m.t||[],s:m.s||[],e:eqn(m.e)}:null;
 }
 var pk={q:'',open:false,lim:60,ap:emptyF(),dr:emptyF()};
 function onKeys(o){return Object.keys(o).filter(function(k){return o[k];});}
@@ -1214,7 +1216,7 @@ function openInfo(name,full){
     var mm=exMeta(nameKey(name));
     if(mm&&((mm.t||[]).length||(mm.s||[]).length||(mm.e||[]).length)){
       var jn=function(a,m){return (a||[]).map(function(n){return lz(m,n);}).join(', ');};
-      h+=sec(T('פרופיל'),row('קבוצת שריר יעד',jn(mm.t,HE_MU))+row('ציוד נדרש',jn(mm.e,HE_EQ))+row('שרירים משניים',jn(mm.s,HE_MU)),false);
+      h+=sec(T('פרופיל'),row('קבוצת שריר יעד',jn(mm.t,HE_MU))+row('ציוד נדרש',jn(eqn(mm.e),HE_EQ))+row('שרירים משניים',jn(mm.s,HE_MU)),false);
     }
   }
   if(full&&x){

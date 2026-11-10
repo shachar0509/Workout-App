@@ -15,6 +15,7 @@ he = json.load(open(hef, encoding='utf-8'))
 def title(s):
     return re.sub(r"(^|[\s\-/(])([a-z])", lambda m: m.group(1) + m.group(2).upper(), s.strip())
 
+EQUIPMENT_MERGE = {'resistance band': 'band', 'leverage machine': 'machine', 'sled machine': 'machine'}  # all machines except Smith are one category
 EXCLUDE_EQUIPMENT = {'bosu ball'}  # equipment removed from the library (with all exercises using it)
 EXCLUDE_TARGETS = {'cardiovascular system'}  # categories removed from the library (with all their exercises)
 seen, kept = set(), []
@@ -23,6 +24,7 @@ for e in d:
     if n.lower() in seen or e['target'] in EXCLUDE_TARGETS or e['equipment'] in EXCLUDE_EQUIPMENT or 'bosu' in n.lower(): continue
     seen.add(n.lower())
     if cl and not cl.get(n, {}).get('k', True): continue  # not tracked as sets x reps (cardio, holds, stretches ...)
+    e = dict(e, equipment=EQUIPMENT_MERGE.get(e['equipment'], e['equipment']))
     kept.append((n, e))
 # filter lists only contain what the kept exercises actually use
 def by_popularity(key):
