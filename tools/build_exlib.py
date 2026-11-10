@@ -15,15 +15,20 @@ he = json.load(open(hef, encoding='utf-8'))
 def title(s):
     return re.sub(r"(^|[\s\-/(])([a-z])", lambda m: m.group(1) + m.group(2).upper(), s.strip())
 
-T = sorted({e['target'] for e in d})
-Q = sorted({e['equipment'] for e in d})
-B = sorted({e['body_part'] for e in d})
-seen, xs = set(), []
+EXCLUDE_TARGETS = {'cardiovascular system'}  # categories removed from the library (with all their exercises)
+seen, kept = set(), []
 for e in d:
     n = title(e['name'])
-    if n.lower() in seen: continue
+    if n.lower() in seen or e['target'] in EXCLUDE_TARGETS: continue
     seen.add(n.lower())
     if cl and not cl.get(n, {}).get('k', True): continue  # not tracked as sets x reps (cardio, holds, stretches ...)
+    kept.append((n, e))
+# filter lists only contain what the kept exercises actually use
+T = sorted({e['target'] for _, e in kept})
+Q = sorted({e['equipment'] for _, e in kept})
+B = sorted({e['body_part'] for _, e in kept})
+xs = []
+for n, e in kept:
     x = {'n': n, 'm': e['media_id'] and f"{e['id']}-{e['media_id']}",
          't': T.index(e['target']), 'e': Q.index(e['equipment']), 'b': B.index(e['body_part']),
          's': [s for s in e.get('secondary_muscles', []) if s],

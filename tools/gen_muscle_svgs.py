@@ -19,7 +19,7 @@ M = {'a': model('anteriorData'), 'p': model('posteriorData')}
 MAP = {
     'abs': ('a', ['ABS']), 'pectorals': ('a', ['CHEST']), 'biceps': ('a', ['BICEPS']), 'delts': ('a', ['FRONT_DELTOIDS']),
     'quads': ('a', ['QUADRICEPS']), 'forearms': ('a', ['FOREARM']), 'adductors': ('a', ['ABDUCTORS']),
-    'serratus anterior': ('a', ['OBLIQUES']), 'levator scapulae': ('a', ['NECK']),
+    'serratus anterior': ('a', ['OBLIQUES']),
     'glutes': ('p', ['GLUTEAL']), 'triceps': ('p', ['TRICEPS']), 'upper back': ('p', ['UPPER_BACK', 'TRAPEZIUS']),
     'lats': ('p', ['UPPER_BACK']), 'calves': ('p', ['CALVES', 'LEFT_SOLEUS', 'RIGHT_SOLEUS']), 'hamstrings': ('p', ['HAMSTRING']),
     'spine': ('p', ['LOWER_BACK']), 'traps': ('p', ['TRAPEZIUS']), 'abductors': ('p', ['ABDUCTOR']),
@@ -40,8 +40,4 @@ for name, (v, hl) in MAP.items():
     y0 = min(max(cy - side / 2, 0), 200 - side)
     svg = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{x0:.1f} {y0:.1f} {side:.1f} {side:.1f}">{"".join(polys)}</svg>'
     open(os.path.join(out, name.replace(' ', '-') + '.svg'), 'w', encoding='utf-8').write(svg)
-# cardio: not a muscle, same palette / square format
-open(os.path.join(out, 'cardiovascular-system.svg'), 'w').write(
-    f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="{BODY}"/>'
-    f'<path d="M50 80C20 58 14 40 14 30a18 18 0 0 1 36-6 18 18 0 0 1 36 6c0 10-6 28-36 50z" fill="{HI}"/></svg>')
-print(len(MAP) + 1, 'svgs')
+print(len(MAP), 'svgs')
