@@ -406,7 +406,6 @@ html.vsnap .xcard,html.vsnap .wcard{scroll-snap-align:start}
 .xex .xbox .xbt{display:flex;justify-content:center;margin-top:8px}
 #sheetAdd h3 .xbt,#sheetPlan h3 .xbt{margin-inline-start:8px}
 .xib{width:34px;height:34px;display:inline-grid;place-items:center;padding:0;border-radius:10px;border:1px solid var(--edge);background:var(--metal);color:#cfd2d8;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
-.xib[data-act="exvid"]{color:var(--red-hi)}
 .lrow{display:flex;gap:8px;align-items:center;margin-top:8px}
 #libList .lrow .wrow,.ppanel .lrow .wrow{flex:1;min-width:0;margin-top:0;gap:10px}
 .lrow .wrow img,.lmr img{width:44px;height:44px;border-radius:8px;object-fit:cover;flex:none;background:#fff}
@@ -1093,7 +1092,6 @@ function cmpNames(a,b){
   return x<y?-1:(x>y?1:0);
 }
 /* ---------- exercise library: hasaneyldrm/exercises-dataset (data in exercises-data.json, media hot-linked) ---------- */
-var IC_PLAY='<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8.5l5.5 3.5-5.5 3.5z"/></svg>';
 var IC_INFO='<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.8h.01"/></svg>';
 var IC_FILT='<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18l-7 8.5V20l-4-2v-5.5z"/></svg>';
 var HE_MU={abs:'בטן',pectorals:'חזה',biceps:'יד קדמית',glutes:'ישבן',delts:'כתפיים',triceps:'יד אחורית','upper back':'גב עליון',lats:'גב רחב (לאטס)',calves:'תאומים',quads:'ארבע ראשי',forearms:'אמות',hamstrings:'ירך אחורי',spine:'עמוד שדרה','cardiovascular system':'מערכת הלב וכלי הדם',traps:'טרפזים',adductors:'מקרבי ירך','serratus anterior':'משונן קדמי',abductors:'מרחיקי ירך','levator scapulae':'מרים השכמה'};
@@ -1110,8 +1108,7 @@ function exImg(x){return EXD.u+'images/'+x.m+'.jpg';}
 function exGif(x){return EXD.u+'videos/'+x.m+'.gif';}
 function exBtns(n){
   var a=esc(n);
-  return '<span class="xbt"><button type="button" class="xib" data-act="exvid" data-n="'+a+'" aria-label="'+T('סרטון')+'" title="'+T('סרטון')+'">'+IC_PLAY+'</button>'+
-    '<button type="button" class="xib" data-act="exinfo" data-n="'+a+'" aria-label="'+T('מידע על התרגיל')+'" title="'+T('מידע על התרגיל')+'">'+IC_INFO+'</button></span>';
+  return '<span class="xbt"><button type="button" class="xib" data-act="exinfo" data-n="'+a+'" aria-label="'+T('מידע על התרגיל')+'" title="'+T('מידע על התרגיל')+'">'+IC_INFO+'</button></span>';
 }
 function exInit(d){
   EXD=d; EXMAP={}; EXH={}; EXTHUMB={}; EXK={};
@@ -1217,15 +1214,15 @@ function openInfo(name,full){
     var mm=exMeta(nameKey(name));
     if(mm&&((mm.t||[]).length||(mm.s||[]).length||(mm.e||[]).length)){
       var jn=function(a,m){return (a||[]).map(function(n){return lz(m,n);}).join(', ');};
-      h+=sec(T('פרופיל'),row('קבוצת שריר יעד',jn(mm.t,HE_MU))+row('ציוד נדרש',jn(mm.e,HE_EQ))+row('שרירים משניים',jn(mm.s,HE_MU)),true);
+      h+=sec(T('פרופיל'),row('קבוצת שריר יעד',jn(mm.t,HE_MU))+row('ציוד נדרש',jn(mm.e,HE_EQ))+row('שרירים משניים',jn(mm.s,HE_MU)),false);
     }
   }
   if(full&&x){
     var heSteps=lang==='he'&&x.ih&&x.ih.length;
-    h+=sec(T('הוראות'),(lang==='he'&&!heSteps?'<p class="nt">'+T('ההוראות זמינות באנגלית בלבד')+'</p>':'')+'<ol'+(heSteps?'':' class="en"')+'>'+(heSteps?x.ih:x.i).map(function(t){return '<li>'+esc(t)+'</li>';}).join('')+'</ol>',true);
+    h+=sec(T('הוראות'),(lang==='he'&&!heSteps?'<p class="nt">'+T('ההוראות זמינות באנגלית בלבד')+'</p>':'')+'<ol'+(heSteps?'':' class="en"')+'>'+(heSteps?x.ih:x.i).map(function(t){return '<li>'+esc(t)+'</li>';}).join('')+'</ol>',false);
     h+=sec(T('פרופיל'),
       row('קבוצת שריר יעד',lz(HE_MU,EXD.mu[x.t]))+row('אזור בגוף',lz(HE_BP,EXD.bp[x.b]))+row('ציוד נדרש',lz(HE_EQ,EXD.eq[x.e]))+
-      row('שרירים משניים',x.s.map(function(m){return lz(HE_SC,m);}).join(', ')),true);
+      row('שרירים משניים',x.s.map(function(m){return lz(HE_SC,m);}).join(', ')),false);
   }
   isBody.innerHTML=h;
   iscrim.setAttribute('dir',lang==='en'?'ltr':'rtl'); $('sheetInfo').setAttribute('dir',lang==='en'?'ltr':'rtl');
@@ -1509,7 +1506,6 @@ document.addEventListener('click',function(e){
   else if(a==='popen'){progOpen=!progOpen;renderProg();}
   else if(a==='ppick'){progKey=v;progOpen=false;renderProg();}
   else if(a==='pax'){progX=v;renderProg();}
-  else if(a==='exvid') openInfo(b.dataset.n,false);
   else if(a==='exinfo') openInfo(b.dataset.n,true);
   else if(a==='isclose') closeInfo();
   else if(a==='lpf'){pk.open=!pk.open;if(pk.open) pk.dr=cpF(pk.ap);buildLibTop();}
