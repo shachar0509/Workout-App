@@ -1145,8 +1145,7 @@ function panelHtml(){
   var d=pk.dr, h='';
   if(EXD){
     h+='<details class="lpd"><summary>'+T('לפי קבוצת שריר')+'</summary><div class="lpl">'+EXD.mu.map(function(m,i){
-      var x=EXTHUMB[i];
-      return '<button type="button" class="lmr'+(d.m[i]?' sel':'')+'" data-act="lpm" data-v="'+i+'">'+(x?'<img loading="lazy" decoding="async" alt="" src="'+esc(exImg(x))+'">':'')+'<span>'+esc(lz(HE_MU,m))+'</span></button>';
+      return '<button type="button" class="lmr'+(d.m[i]?' sel':'')+'" data-act="lpm" data-v="'+i+'"><img loading="lazy" decoding="async" alt="" src="muscles/'+esc(m.replace(/ /g,'-'))+'.svg"><span>'+esc(lz(HE_MU,m))+'</span></button>';
     }).join('')+'</div></details>'+
     '<details class="lpd"><summary>'+T('לפי ציוד')+'</summary><div class="lpl">'+EXD.eq.map(function(m,i){
       return '<button type="button" class="lmr eq'+(d.e[i]?' sel':'')+'" data-act="lpe" data-v="'+i+'"><span>'+esc(lz(HE_EQ,m))+'</span></button>';
