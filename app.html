@@ -406,7 +406,6 @@ html.vsnap .xcard,html.vsnap .wcard{scroll-snap-align:start}
 .xex .xbox .xbt{display:flex;justify-content:center;margin-top:8px}
 #sheetAdd h3 .xbt,#sheetPlan h3 .xbt{margin-inline-start:8px}
 .xib{width:34px;height:34px;display:inline-grid;place-items:center;padding:0;border-radius:10px;border:1px solid var(--edge);background:var(--metal);color:#cfd2d8;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
-.xib[data-act="exvid"]{color:var(--red-hi)}
 .lrow{display:flex;gap:8px;align-items:center;margin-top:8px}
 #libList .lrow .wrow,.ppanel .lrow .wrow{flex:1;min-width:0;margin-top:0;gap:10px}
 .lrow .wrow img,.lmr img{width:44px;height:44px;border-radius:8px;object-fit:cover;flex:none;background:#fff}
@@ -442,6 +441,8 @@ html.vsnap .xcard,html.vsnap .wcard{scroll-snap-align:start}
 .isb .nt{color:var(--muted);font-size:12px;margin:0 0 8px}
 .prf{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--line)}
 .prf span{color:var(--muted)}.prf b{text-align:end}
+.planb:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
+.fld input:disabled,#fW:disabled{opacity:.4}
 .cform{padding:2px 2px 6px}
 .cform input{width:100%;height:44px;padding:0 12px;margin-bottom:8px;border:1px solid var(--edge);border-radius:10px;background:#08090b;color:#fff;font:600 16px var(--body)}
 .cform .lpd{border-bottom:1px solid var(--line)}
@@ -747,7 +748,7 @@ function num(s){
 function isHalf(x){return Math.abs(x*2-Math.round(x*2))<1e-9;}
 function fmtW(x){return Number.isInteger(x)?String(x):String(Math.round(x*100)/100);}
 function fmtP(x){return Number.isInteger(x)?String(x):x.toFixed(1);}
-function fmtSet(s){return fmtW(s.w)+'Kg X '+s.r+' @ '+(method==='rir'?fmtP(10-s.p)+' RIR':fmtP(s.p));}
+function fmtSet(s){return (s.w>0?fmtW(s.w)+'Kg X ':'')+s.r+' @ '+(method==='rir'?fmtP(10-s.p)+' RIR':fmtP(s.p));}
 function fmtDate(iso){
   try{return new Date(iso).toLocaleDateString(lang==='en'?'en-US':'he-IL',{day:'numeric',month:'long'});}catch(e){return '';}
 }
@@ -901,7 +902,7 @@ function renderTable(w){
     h+='<div class="xcard'+(sets.length>=r.sets?' done':'')+(r.ss?' ss':'')+rtlc+'">'+(sets.length>=r.sets?'<span class="donetag">'+T('בוצע')+'</span>':'')+
       '<div class="xex"><div class="xh">'+T('תרגיל')+'</div><div class="xbox"><span class="nm" dir="auto">'+esc(dispName(r.name))+'</span>'+exBtns(r.name)+'<span class="pl">'+planLabel(r)+'</span>'+
       '<span class="rbtns"><button type="button" class="addb" data-act="log" data-ex="'+r.id+'">'+T('הוסף סט')+'</button>'+
-      '<button type="button" class="planb" data-act="plan" data-ex="'+r.id+'">'+T('המלצת משקל')+'</button></span></div></div>'+
+      '<button type="button" class="planb" data-act="plan" data-ex="'+r.id+'"'+(exNeedsWeight(r.name)?'':' disabled aria-disabled="true"')+'>'+T('המלצת משקל')+'</button></span></div></div>'+
       '<div class="xsets" data-ex="'+r.id+'" data-wid="'+w.id+'" data-n="'+sets.length+'">';
     for(var i=0;i<cols;i++){
       var st=sets[i];
@@ -961,34 +962,35 @@ var slP=mkSlider(sP,oP,false,function(){validateAdd();});
 var tSlR=mkSlider(tR,oTR,true,function(){renderPlan();});
 var tSlP=mkSlider(tP,oTP,false,function(){renderPlan();});
 function readAdd(){
-  var W=num(fW.value);
-  if(!(W>0&&W<=1000)||!slR.touched||!slP.touched) return null;
-  return {w:Math.round(W*100)/100,r:slR.val(),p:slP.val()};
+  var nw=!!(modal&&modal.kind==='add'&&modal.nw), W=nw?0:num(fW.value);
+  if((!nw&&!(W>0&&W<=1000))||!slR.touched||!slP.touched) return null;
+  return {w:nw?0:Math.round(W*100)/100,r:slR.val(),p:slP.val()};
 }
 function validateAdd(){
   var v=readAdd();
   mSave.disabled=!v;
   if(v){mHint.setAttribute('dir','ltr');mHint.textContent=fmtSet(v);mHint.className='hint ok';}
-  else{mHint.setAttribute('dir',lang==='en'?'ltr':'rtl');mHint.textContent=TM('יש למלא משקל ולבחור חזרות ו-RPE');mHint.className='hint';}
+  else{mHint.setAttribute('dir',lang==='en'?'ltr':'rtl');mHint.textContent=(modal&&modal.nw)?TM('יש לבחור חזרות ו-RPE'):TM('יש למלא משקל ולבחור חזרות ו-RPE');mHint.className='hint';}
   return v;
 }
 function openAdd(ex,idx){
   var w=byId(sel); if(!w) return;
   var row=findRow(ex); if(!row) return;
   var sets=getSets(w.id,ex), editing=idx!==null&&!!sets[idx];
-  modal={kind:'add',wid:w.id,ex:ex,idx:editing?idx:null};
+  var nw=!exNeedsWeight(row.name);
+  modal={kind:'add',wid:w.id,ex:ex,idx:editing?idx:null,nw:nw};
   mTitle.innerHTML=esc(dispName(row.name)+' · '+T('סט')+' '+(editing?idx+1:sets.length+1))+exBtns(row.name);
   if(editing){
     fW.value=fmtW(sets[idx].w); slR.set(sets[idx].r); slP.set(sets[idx].p);
   }else{
     fW.value=sets.length?fmtW(sets[sets.length-1].w):''; slR.set(null); slP.set(null);
   }
+  fW.disabled=nw; fW.placeholder=nw?'—':''; if(nw) fW.value='';
   mDel.hidden=!editing;
   sheetPlan.hidden=true; sheetAdd.hidden=false; scrim.hidden=false;
   document.body.style.overflow='hidden';
   validateAdd();
-  fW.focus();
-  if(fW.select) fW.select();
+  if(!nw){fW.focus();if(fW.select) fW.select();}
 }
 function saveModal(){
   if(!modal||modal.kind!=='add') return;
@@ -1044,6 +1046,7 @@ function renderPlan(){
 }
 function openPlan(ex){
   var row=findRow(ex); if(!row||!byId(sel)) return;
+  if(!exNeedsWeight(row.name)) return;
   modal={kind:'plan',ex:ex};
   tSlR.set(null); tSlP.set(null);
   sheetAdd.hidden=true; sheetPlan.hidden=false; scrim.hidden=false;
@@ -1089,16 +1092,15 @@ function cmpNames(a,b){
   return x<y?-1:(x>y?1:0);
 }
 /* ---------- exercise library: hasaneyldrm/exercises-dataset (data in exercises-data.json, media hot-linked) ---------- */
-var IC_PLAY='<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8.5l5.5 3.5-5.5 3.5z"/></svg>';
 var IC_INFO='<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.8h.01"/></svg>';
 var IC_FILT='<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18l-7 8.5V20l-4-2v-5.5z"/></svg>';
-var HE_MU={abs:'בטן',pectorals:'חזה',biceps:'יד קדמית',glutes:'ישבן',delts:'כתפיים',triceps:'יד אחורית','upper back':'גב עליון',lats:'גב רחב (לאטס)',calves:'תאומים',quads:'ארבע ראשי',forearms:'אמות',hamstrings:'ירך אחורי',spine:'עמוד שדרה','cardiovascular system':'מערכת הלב וכלי הדם',traps:'טרפזים',adductors:'מקרבי ירך','serratus anterior':'משונן קדמי',abductors:'מרחיקי ירך','levator scapulae':'מרים השכמה'};
-var HE_EQ={'body weight':'משקל גוף',dumbbell:'משקולות יד',cable:'כבלים',barbell:'מוט','leverage machine':'מכונה (לברג׳)',band:'גומיית התנגדות','smith machine':'מכונת סמית׳',kettlebell:'קטלבל',weighted:'עם משקל נוסף','stability ball':'כדור פיזיו','ez barbell':'מוט EZ',assisted:'בסיוע','sled machine':'מכונת מזחלת','medicine ball':'כדור כוח',rope:'חבל',roller:'רולר',  'resistance band':'גומיית התנגדות','bosu ball':'בוסו','olympic barbell':'מוט אולימפי','wheel roller':'גלגל בטן','upper body ergometer':'ארגומטר לפלג גוף עליון','skierg machine':'מכונת סקיארג',hammer:'פטיש','stationary bike':'אופני כושר',tire:'צמיג','trap bar':'מוט טרפז','elliptical machine':'אליפטיקל','stepmill machine':'מכונת מדרגות'};
+var HE_MU={abs:'בטן',pectorals:'חזה',biceps:'יד קדמית',glutes:'ישבן',delts:'כתפיים',triceps:'יד אחורית','upper back':'גב עליון',lats:'גב רחב (לאטס)',calves:'תאומים',quads:'ארבע ראשי',forearms:'אמות',hamstrings:'ירך אחורי',spine:'גב תחתון (זוקפים)',traps:'טרפזים',adductors:'מקרבי ירך','serratus anterior':'מסור קדמי',abductors:'מרחיקי ירך','levator scapulae':'טרפז עליון'};
+var HE_EQ={'body weight':'משקל גוף',dumbbell:'משקולות יד',cable:'כבלים',barbell:'מוט','leverage machine':'מכונה (לברג׳)',band:'גומיית התנגדות','smith machine':'מכונת סמית׳',kettlebell:'קטלבל',weighted:'עם משקל נוסף','stability ball':'כדור פיזיו','ez barbell':'מוט EZ',assisted:'בסיוע','sled machine':'מכונת מזחלת','medicine ball':'כדור כוח',rope:'חבל',roller:'רולר',  'resistance band':'גומיית התנגדות','olympic barbell':'מוט אולימפי','wheel roller':'גלגל בטן','upper body ergometer':'ארגומטר לפלג גוף עליון','skierg machine':'מכונת סקיארג',hammer:'פטיש','stationary bike':'אופני כושר',tire:'צמיג','trap bar':'מוט טרפז','elliptical machine':'אליפטיקל','stepmill machine':'מכונת מדרגות'};
 var HE_BP={'upper arms':'זרועות עליונות','upper legs':'רגליים עליונות',back:'גב',waist:'בטן ומותניים',chest:'חזה',shoulders:'כתפיים','lower legs':'רגליים תחתונות','lower arms':'אמות',cardio:'אירובי',neck:'צוואר'};
 var HE_SC={shoulders:'כתפיים',forearms:'אמות',biceps:'יד קדמית',triceps:'יד אחורית',hamstrings:'ירך אחורי',quadriceps:'ארבע ראשי',glutes:'ישבן',obliques:'אלכסוניים','hip flexors':'מכופפי ירך',chest:'חזה',trapezius:'טרפזים',traps:'טרפזים',deltoids:'כתפיים',calves:'תאומים',ankles:'קרסוליים',core:'ליבה','lower back':'גב תחתון','rotator cuff':'השרוול המסובב',soleus:'סוליאוס',rhomboids:'רומבואידים','wrist flexors':'מכופפי שורש כף היד','latissimus dorsi':'גב רחב',abdominals:'בטן','ankle stabilizers':'מייצבי קרסול','upper back':'גב עליון','wrist extensors':'פושטי שורש כף היד',lats:'גב רחב',wrists:'שורשי כפות הידיים',hands:'כפות ידיים'};
 function cap(s){return String(s).replace(/(^|[\s\-\/(])([a-z])/g,function(m,a,b){return a+b.toUpperCase();});}
 function lz(map,k){return lang==='he'&&map[k]?map[k]:cap(k);}
-Object.assign(EN,{'חיפוש תרגיל':'Search exercises','סינון':'Filter','לפי קבוצת שריר':'By muscle group','לפי ציוד':'By equipment','התרגילים שלי':'My exercises','סנן':'Apply','אפס':'Reset','הצג עוד':'Show more','לא נמצאו תרגילים':'No exercises found','סרטון':'Video','מידע על התרגיל':'Exercise info','הוראות':'Instructions','פרופיל':'Profile','קבוצת שריר יעד':'Target Muscle Group','אזור בגוף':'Body Part','ציוד נדרש':'Equipment Required','שרירים משניים':'Secondary Muscles','ההוראות זמינות באנגלית בלבד':'Instructions are available in English only','אין סרטון לתרגיל הזה.':'No video for this exercise.','תרגיל שיצרת, אין עליו מידע נוסף.':'A custom exercise: no extra info.','לא ניתן לטעון את הסרטון.':'Could not load the video.','קבוצת שריר ראשית':'Primary muscle group','שמור תרגיל':'Save exercise','כולל שרירים משניים':'Include secondary muscles'});
+Object.assign(EN,{'חיפוש תרגיל':'Search exercises','סינון':'Filter','לפי קבוצת שריר':'By muscle group','לפי ציוד':'By equipment','התרגילים שלי':'My exercises','סנן':'Apply','אפס':'Reset','הצג עוד':'Show more','לא נמצאו תרגילים':'No exercises found','סרטון':'Video','מידע על התרגיל':'Exercise info','הוראות':'Instructions','פרופיל':'Profile','קבוצת שריר יעד':'Target Muscle Group','אזור בגוף':'Body Part','ציוד נדרש':'Equipment Required','שרירים משניים':'Secondary Muscles','ההוראות זמינות באנגלית בלבד':'Instructions are available in English only','אין סרטון לתרגיל הזה.':'No video for this exercise.','תרגיל שיצרת, אין עליו מידע נוסף.':'A custom exercise: no extra info.','לא ניתן לטעון את הסרטון.':'Could not load the video.','קבוצת שריר ראשית':'Primary muscle group','שמור תרגיל':'Save exercise','כולל שרירים משניים':'Include secondary muscles','דורש משקל עבודה':'Needs a working weight','יש לבחור חזרות ו-RPE':'Choose reps and RPE'});
 var EXD=null, EXMAP={}, EXH={}, EXTHUMB={}, EXK={};
 function exOf(n){return EXD?(EXMAP[nameKey(n)]||null):null;}
 function dispName(n){if(lang==='he'){var h=EXH[nameKey(n)];if(h) return h;}return n;}
@@ -1106,8 +1108,7 @@ function exImg(x){return EXD.u+'images/'+x.m+'.jpg';}
 function exGif(x){return EXD.u+'videos/'+x.m+'.gif';}
 function exBtns(n){
   var a=esc(n);
-  return '<span class="xbt"><button type="button" class="xib" data-act="exvid" data-n="'+a+'" aria-label="'+T('סרטון')+'" title="'+T('סרטון')+'">'+IC_PLAY+'</button>'+
-    '<button type="button" class="xib" data-act="exinfo" data-n="'+a+'" aria-label="'+T('מידע על התרגיל')+'" title="'+T('מידע על התרגיל')+'">'+IC_INFO+'</button></span>';
+  return '<span class="xbt"><button type="button" class="xib" data-act="exinfo" data-n="'+a+'" aria-label="'+T('מידע על התרגיל')+'" title="'+T('מידע על התרגיל')+'">'+IC_INFO+'</button></span>';
 }
 function exInit(d){
   EXD=d; EXMAP={}; EXH={}; EXTHUMB={}; EXK={};
@@ -1129,7 +1130,8 @@ function exLoad(){
 }
 function emptyF(){return {m:{},e:{},mine:false,sec:false};}
 function cpF(f){return {m:Object.assign({},f.m),e:Object.assign({},f.e),mine:f.mine,sec:f.sec};}
-var cm={t:{},s:{},e:{}};
+var cm={t:{},s:{},e:{},w:true};
+function exNeedsWeight(n){var x=exOf(n);if(x) return x.w!==0;var m=exMeta(nameKey(n));return !(m&&m.w===false);}
 function exMeta(k){var e=libByKey(k);return (e&&e.m)||libMeta[k]||null;}
 /* dataset secondary-muscle vocabulary -> target-muscle names used by the filter */
 var SEC2T={shoulders:'delts',deltoids:'delts',forearms:'forearms',biceps:'biceps',triceps:'triceps',hamstrings:'hamstrings',quadriceps:'quads',glutes:'glutes',obliques:'abs',core:'abs',abdominals:'abs',chest:'pectorals',trapezius:'traps',traps:'traps',calves:'calves',soleus:'calves','lower back':'spine',lats:'lats','latissimus dorsi':'lats','upper back':'upper back',rhomboids:'upper back'};
@@ -1212,15 +1214,15 @@ function openInfo(name,full){
     var mm=exMeta(nameKey(name));
     if(mm&&((mm.t||[]).length||(mm.s||[]).length||(mm.e||[]).length)){
       var jn=function(a,m){return (a||[]).map(function(n){return lz(m,n);}).join(', ');};
-      h+=sec(T('פרופיל'),row('קבוצת שריר יעד',jn(mm.t,HE_MU))+row('ציוד נדרש',jn(mm.e,HE_EQ))+row('שרירים משניים',jn(mm.s,HE_MU)),true);
+      h+=sec(T('פרופיל'),row('קבוצת שריר יעד',jn(mm.t,HE_MU))+row('ציוד נדרש',jn(mm.e,HE_EQ))+row('שרירים משניים',jn(mm.s,HE_MU)),false);
     }
   }
   if(full&&x){
     var heSteps=lang==='he'&&x.ih&&x.ih.length;
-    h+=sec(T('הוראות'),(lang==='he'&&!heSteps?'<p class="nt">'+T('ההוראות זמינות באנגלית בלבד')+'</p>':'')+'<ol'+(heSteps?'':' class="en"')+'>'+(heSteps?x.ih:x.i).map(function(t){return '<li>'+esc(t)+'</li>';}).join('')+'</ol>',true);
+    h+=sec(T('הוראות'),(lang==='he'&&!heSteps?'<p class="nt">'+T('ההוראות זמינות באנגלית בלבד')+'</p>':'')+'<ol'+(heSteps?'':' class="en"')+'>'+(heSteps?x.ih:x.i).map(function(t){return '<li>'+esc(t)+'</li>';}).join('')+'</ol>',false);
     h+=sec(T('פרופיל'),
       row('קבוצת שריר יעד',lz(HE_MU,EXD.mu[x.t]))+row('אזור בגוף',lz(HE_BP,EXD.bp[x.b]))+row('ציוד נדרש',lz(HE_EQ,EXD.eq[x.e]))+
-      row('שרירים משניים',x.s.map(function(m){return lz(HE_SC,m);}).join(', ')),true);
+      row('שרירים משניים',x.s.map(function(m){return lz(HE_SC,m);}).join(', ')),false);
   }
   isBody.innerHTML=h;
   iscrim.setAttribute('dir',lang==='en'?'ltr':'rtl'); $('sheetInfo').setAttribute('dir',lang==='en'?'ltr':'rtl');
@@ -1231,6 +1233,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!iscrim.hid
 isBody.addEventListener('error',function(e){
   var t=e.target; if(t&&t.tagName==='IMG'){var p=t.parentNode; p.innerHTML='<p class="note">'+T('לא ניתן לטעון את הסרטון.')+'</p>';}
 },true);
+libList.addEventListener('change',function(e){if(e.target.id==='cmW') cm.w=e.target.checked;});
 libTop.addEventListener('input',function(e){if(e.target.id==='lpQ'){pk.q=e.target.value;pk.lim=60;renderLibItems();}});
 libTop.addEventListener('change',function(e){if(e.target.id==='lpMine') pk.dr.mine=e.target.checked;else if(e.target.id==='lpSec') pk.dr.sec=e.target.checked;});
 function libItems(){
@@ -1271,6 +1274,7 @@ function createFormHtml(){
     }).join('')+'</div></details>';
   };
   return '<div class="cform"><input type="text" id="libNewName" maxlength="40" dir="auto" placeholder="'+T('שם תרגיל')+'" aria-label="'+T('שם תרגיל')+'" autocomplete="off">'+
+    '<label class="tchk"><input type="checkbox" id="cmW"'+(cm.w!==false?' checked':'')+'><span>'+T('דורש משקל עבודה')+'</span></label>'+
     grp('קבוצת שריר ראשית','t',EXD&&EXD.mu,HE_MU,true)+grp('שרירים משניים','s',EXD&&EXD.mu,HE_MU)+grp('ציוד נדרש','e',EXD&&EXD.eq,HE_EQ)+'</div>';
 }
 function renderLibFoot(){
@@ -1502,7 +1506,6 @@ document.addEventListener('click',function(e){
   else if(a==='popen'){progOpen=!progOpen;renderProg();}
   else if(a==='ppick'){progKey=v;progOpen=false;renderProg();}
   else if(a==='pax'){progX=v;renderProg();}
-  else if(a==='exvid') openInfo(b.dataset.n,false);
   else if(a==='exinfo') openInfo(b.dataset.n,true);
   else if(a==='isclose') closeInfo();
   else if(a==='lpf'){pk.open=!pk.open;if(pk.open) pk.dr=cpF(pk.ap);buildLibTop();}
@@ -1529,7 +1532,7 @@ document.addEventListener('click',function(e){
   else if(a==='edelyes'){var di=parseInt(b.dataset.i,10);editRows.splice(di,1);editConfirm=-1;if(di<editIdx) editIdx--; else if(di===editIdx) editIdx=-1;renderEdit();}
   else if(a==='edelno'){editConfirm=-1;renderEdit();}
   else if(a==='lpick'){libSel[v]=!libSel[v];b.classList.toggle('sel',!!libSel[v]);}
-  else if(a==='lnew'){libCreate=true;cm={t:{},s:{},e:{}};renderEdit();var ni=$('libNewName');if(ni) ni.focus();}
+  else if(a==='lnew'){libCreate=true;cm={t:{},s:{},e:{},w:true};renderEdit();var ni=$('libNewName');if(ni) ni.focus();}
   else if(a==='lccancel'){libCreate=false;renderEdit();}
   else if(a==='cmt'){var g=b.dataset.g;cm[g][v]=!cm[g][v];b.classList.toggle('sel',!!cm[g][v]);}
   else if(a==='lcommit'){
@@ -1537,8 +1540,8 @@ document.addEventListener('click',function(e){
     if(nm&&nk){
       var have=libItems().filter(function(x){return x.key===nk;})[0];
       if(!have&&!editRows.some(function(r){return nameKey(r.name)===nk;})) libExtra.push({key:nk,name:nm});
-      var mt={t:onKeys(cm.t),s:onKeys(cm.s),e:onKeys(cm.e)};
-      if(!have&&(mt.t.length||mt.s.length||mt.e.length)) libMeta[nk]=mt;
+      var mt={t:onKeys(cm.t),s:onKeys(cm.s),e:onKeys(cm.e),w:cm.w!==false};
+      if(!have&&(mt.t.length||mt.s.length||mt.e.length||mt.w===false)) libMeta[nk]=mt;
       libSel[nk]=true; libCreate=false; pkClear(); renderEdit();
       var sb=libList.querySelector('.wrow.sel[data-v="'+nk.replace(/"/g,'')+'"]'); if(sb&&sb.scrollIntoView) sb.scrollIntoView({block:'nearest'});
     }
@@ -1939,7 +1942,7 @@ function progPoints(key,m){
 }
 function progList(){
   var m=buildIdMap(), names=exNames(), out=[];
-  Object.keys(names).forEach(function(k){if(progPoints(k,m).length) out.push({key:k,name:dispName(names[k]),raw:names[k]});});
+  Object.keys(names).forEach(function(k){if(exNeedsWeight(names[k])&&progPoints(k,m).length) out.push({key:k,name:dispName(names[k]),raw:names[k]});});
   return out.sort(function(a,b){return cmpNames(a.name,b.name);});
 }
 function progStep(d){
