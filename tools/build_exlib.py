@@ -15,18 +15,23 @@ he = json.load(open(hef, encoding='utf-8'))
 def title(s):
     return re.sub(r"(^|[\s\-/(])([a-z])", lambda m: m.group(1) + m.group(2).upper(), s.strip())
 
+EXCLUDE_EQUIPMENT = {'bosu ball'}  # equipment removed from the library (with all exercises using it)
 EXCLUDE_TARGETS = {'cardiovascular system'}  # categories removed from the library (with all their exercises)
 seen, kept = set(), []
 for e in d:
     n = title(e['name'])
-    if n.lower() in seen or e['target'] in EXCLUDE_TARGETS: continue
+    if n.lower() in seen or e['target'] in EXCLUDE_TARGETS or e['equipment'] in EXCLUDE_EQUIPMENT or 'bosu' in n.lower(): continue
     seen.add(n.lower())
     if cl and not cl.get(n, {}).get('k', True): continue  # not tracked as sets x reps (cardio, holds, stretches ...)
     kept.append((n, e))
 # filter lists only contain what the kept exercises actually use
-T = sorted({e['target'] for _, e in kept})
-Q = sorted({e['equipment'] for _, e in kept})
-B = sorted({e['body_part'] for _, e in kept})
+def by_popularity(key):
+    # most common first: sum of the 10 most popular exercises in the group (so groups are not favoured just for having many variants)
+    sc_by = {}
+    for n, e in kept: sc_by.setdefault(e[key], []).append(score(n))
+    top = {g: sum(sorted(v, reverse=True)[:10]) for g, v in sc_by.items()}
+    return sorted(top, key=lambda g: (-top[g], -len(sc_by[g]), g))
+T, Q, B = by_popularity('target'), by_popularity('equipment'), by_popularity('body_part')
 xs = []
 for n, e in kept:
     x = {'n': n, 'm': e['media_id'] and f"{e['id']}-{e['media_id']}",
