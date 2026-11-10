@@ -1185,7 +1185,8 @@ function openInfo(name,full){
   else h+='<p class="note">'+T(full?'תרגיל שיצרת, אין עליו מידע נוסף.':'אין סרטון לתרגיל הזה.')+'</p>';
   if(full&&x){
     var sec=function(t,b,o){return '<details class="isec"'+(o?' open':'')+'><summary>'+t+'</summary><div class="isb">'+b+'</div></details>';};
-    h+=sec(T('הוראות'),(lang==='he'?'<p class="nt">'+T('ההוראות זמינות באנגלית בלבד')+'</p>':'')+'<ol class="en">'+x.i.map(function(t){return '<li>'+esc(t)+'</li>';}).join('')+'</ol>',true);
+    var heSteps=lang==='he'&&x.ih&&x.ih.length;
+    h+=sec(T('הוראות'),(lang==='he'&&!heSteps?'<p class="nt">'+T('ההוראות זמינות באנגלית בלבד')+'</p>':'')+'<ol'+(heSteps?'':' class="en"')+'>'+(heSteps?x.ih:x.i).map(function(t){return '<li>'+esc(t)+'</li>';}).join('')+'</ol>',true);
     var row=function(l,v){return v?'<div class="prf"><span>'+T(l)+'</span><b>'+esc(v)+'</b></div>':'';};
     h+=sec(T('פרופיל'),
       row('קבוצת שריר יעד',lz(HE_MU,EXD.mu[x.t]))+row('אזור בגוף',lz(HE_BP,EXD.bp[x.b]))+row('ציוד נדרש',lz(HE_EQ,EXD.eq[x.e]))+

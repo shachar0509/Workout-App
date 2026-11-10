@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build exercises-data.json from hasaneyldrm/exercises-dataset (data/exercises.json) + Hebrew names.
 Media (images/GIFs) is NOT copied: the app hot-links it at the pinned commit (c) from raw.githubusercontent.com.
-Usage: python3 -I tools/build_exlib.py <dataset/data/exercises.json> <he_names.json> <commit_sha> <out.json>"""
+Usage: python3 -I tools/build_exlib.py <dataset/data/exercises.json> <he_names.json: name -> {h, i} or name -> str> <commit_sha> <out.json>"""
 import json, re, sys
 
 src, hef, sha, out = sys.argv[1:5]
@@ -23,10 +23,13 @@ for e in d:
          't': T.index(e['target']), 'e': Q.index(e['equipment']), 'b': B.index(e['body_part']),
          's': [s for s in e.get('secondary_muscles', []) if s],
          'i': [re.sub(r'\s+', ' ', s).strip() for s in e['instruction_steps']['en'] if s.strip()]}
-    if he.get(n): x['h'] = he[n]
+    t = he.get(n)
+    if isinstance(t, str): t = {'h': t}
+    if t and t.get('h'): x['h'] = t['h']
+    if t and len(t.get('i') or []) == len(x['i']) and x['i']: x['ih'] = t['i']  # Hebrew steps, same count
     xs.append(x)
 base = {x['n'].lower() for x in xs}
-extra = {k: v for k, v in he.items() if k.lower() not in base}  # Hebrew for default names outside the library
+extra = {k: (v['h'] if isinstance(v, dict) else v) for k, v in he.items() if k.lower() not in base}  # Hebrew for default names outside the library
 json.dump({'v': 1, 'u': f'https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/{sha}/',
            'mu': T, 'eq': Q, 'bp': B, 'x': xs, 'h': extra},
           open(out, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
