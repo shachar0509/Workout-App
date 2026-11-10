@@ -29,7 +29,7 @@ for e in d:
     t = he.get(n)
     if isinstance(t, str): t = {'h': t}
     if t and t.get('h'): x['h'] = t['h']
-    if t and len(t.get('i') or []) == len(x['i']) and x['i']: x['ih'] = t['i']  # Hebrew steps, same count
+    if t and t.get('i'): x['ih'] = t['i']  # Hebrew steps (rewritten, not 1:1 with the English)
     if score(n): x['k'] = score(n)
     xs.append(x)
 base = {x['n'].lower() for x in xs}
