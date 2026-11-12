@@ -237,14 +237,6 @@ button.day{cursor:pointer}
 #rpill{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(172px + env(safe-area-inset-bottom,0px));z-index:40;display:flex;align-items:center;gap:8px;padding:4px 6px 4px 16px;border-radius:999px;background:#0d0e11;border:1px solid var(--red);box-shadow:0 0 18px var(--glow);font:800 22px var(--body);color:#fff;direction:ltr}
 #rpill[hidden]{display:none}
 #rpill button{background:none;border:0;color:var(--muted);width:40px;height:40px;display:grid;place-items:center;cursor:pointer}
-.alarm{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:rgba(0,0,0,.8);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
-.alarm[hidden]{display:none!important}
-.acard{width:min(340px,86vw);padding:26px 20px 20px;border-radius:20px;background:linear-gradient(180deg,#1b1c21,#0d0e11);border:1px solid var(--red);text-align:center;animation:apulse 1s infinite}
-.acard h3{margin:10px 0 6px;font:800 28px var(--body);color:#fff}
-.acard p{margin:0 0 18px;color:var(--muted);font-size:16px}
-.abell{width:64px;height:64px;fill:none;stroke:var(--red-hi);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;animation:ashake .5s infinite}
-@keyframes apulse{0%,100%{box-shadow:0 0 30px rgba(255,42,69,.4)}50%{box-shadow:0 0 90px rgba(255,42,69,.95)}}
-@keyframes ashake{0%,100%{transform:rotate(0)}25%{transform:rotate(-14deg)}75%{transform:rotate(14deg)}}
 .rring{position:relative;width:46px;height:46px;margin-inline-start:auto;flex:none;direction:ltr}
 .rring[hidden]{display:none}
 .rring svg{width:100%;height:100%;transform:rotate(-90deg)}
@@ -502,12 +494,6 @@ html.vsnap .xcard,html.vsnap .wcard{scroll-snap-align:start}
     <span data-t>התקדמות</span>
   </button>
 </nav>
-<div id="alarm" class="alarm" hidden><div class="acard" role="alertdialog" aria-modal="true">
-  <svg class="abell" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17h12l-1.5-2v-4a4.5 4.5 0 0 0-9 0v4zM10 20a2 2 0 0 0 4 0"/></svg>
-  <h3 id="aT"></h3><p id="aS"></p>
-  <button type="button" class="btn" id="aStop" data-t>בטל</button>
-</div></div>
-
 <div class="iscrim" id="iscrim" hidden><div class="sheet" id="sheetInfo" role="dialog" aria-modal="true" aria-labelledby="isTitle" dir="rtl" data-dir>
   <h3 id="isTitle" dir="auto"></h3><div id="isBody"></div>
   <div class="mact"><button type="button" class="btn ghost" data-act="isclose" data-t>סגור</button></div>
@@ -993,7 +979,6 @@ function openAdd(ex,idx){
 function saveModal(){
   if(!modal||modal.kind!=='add') return;
   var v=validateAdd(); if(!v) return;
-  unlockAudio();
   var arr=getSets(modal.wid,modal.ex).slice();
   var isEdit=(modal.idx!==null&&modal.idx<arr.length);
   if(isEdit) arr[modal.idx]=v; else arr.push(v);
@@ -1520,7 +1505,6 @@ document.addEventListener('click',function(e){
   else if(a==='erest') openRest(parseInt(b.dataset.i,10));
   else if(a==='restdef') openRestDefault();
   else if(a==='clockmode'){clockMode=(v==='1');try{localStorage.setItem('wl-clock',v);}catch(x){}renderSettings();}
-  else if(a==='lockmode'){lockMode=(v==='1');try{localStorage.setItem('wl-lockmode',v);}catch(x){}renderSettings();}
   else if(a==='tedit') openEdit(v);
   else if(a==='tdel'){pickDel=v;renderPickList();}
   else if(a==='tdelno'){pickDel=null;renderPickList();}
@@ -1655,7 +1639,7 @@ $('rNone').addEventListener('click',function(){
 $('rCancel').addEventListener('click',closeRest);
 var timers=(function(){try{return JSON.parse(localStorage.getItem('wl-timers')||'{}')||{};}catch(e){return {};}})();
 function saveTimers(){try{localStorage.setItem('wl-timers',JSON.stringify(timers));}catch(e){}}
-var ac=null, beepT=null, restEnd=0, restName='', restT=null, alarmOn=false, restTotal=0;
+var restEnd=0, restName='', restT=null, restTotal=0, wlock=null;
 var restConfirm=false;
 function setRestConfirm(v){
   restConfirm=!!v; document.body.classList.toggle('dim-rest',restConfirm);
@@ -1668,35 +1652,18 @@ document.addEventListener('click',function(e){
     if(ring){stopRest(); if(clockMode){try{openClock(null);}catch(x){}}} else setRestConfirm(false);
     return;
   }
-  if(ring&&restEnd&&!alarmOn){e.preventDefault();e.stopPropagation();setRestConfirm(true);}
+  if(ring&&restEnd){e.preventDefault();e.stopPropagation();setRestConfirm(true);}
 },true);
 function updateRing(left){
   var els=document.querySelectorAll('.rring'); if(!els.length) return;
   if(left===undefined) left=restEnd?Math.ceil((restEnd-Date.now())/1000):0;
-  var on=!!restEnd&&!alarmOn&&left>0&&restTotal>0;
+  var on=!!restEnd&&left>0&&restTotal>0;
   Array.prototype.forEach.call(els,function(el){
     el.hidden=!on; el.classList.toggle('cf',restConfirm&&on); if(!on) return;
     var frac=Math.max(0,Math.min(1,(restEnd-Date.now())/(restTotal*1000)));
     el.querySelector('.rp').style.strokeDashoffset=String(100.53*(1-frac));
     var t=fmtRest(left), b=el.querySelector('b'); if(b.textContent!==t) b.textContent=t;
   });
-}
-var kaudio=null, kUrls=null, wlock=null;
-function mkWav(rate,fn,n){
-  var buf=new ArrayBuffer(44+n*2), v=new DataView(buf);
-  function s(o,t){for(var i=0;i<t.length;i++) v.setUint8(o+i,t.charCodeAt(i));}
-  s(0,'RIFF');v.setUint32(4,36+n*2,true);s(8,'WAVE');s(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
-  v.setUint32(24,rate,true);v.setUint32(28,rate*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);s(36,'data');v.setUint32(40,n*2,true);
-  for(var i=0;i<n;i++) v.setInt16(44+i*2,fn(i/rate),true);
-  return URL.createObjectURL(new Blob([buf],{type:'audio/wav'}));
-}
-function kInit(){
-  if(kaudio) return;
-  kUrls={
-    silent:mkWav(8000,function(){return 0;},8000),
-    beep:mkWav(22050,function(t){var on=(t<0.2)||(t>=0.3&&t<0.5);return on?(Math.sin(2*Math.PI*988*t)>0?15000:-15000):0;},22050)
-  };
-  kaudio=new Audio(); kaudio.loop=true; kaudio.setAttribute('playsinline',''); kaudio.preload='auto';
 }
 var clockMode=(function(){try{return localStorage.getItem('wl-clock')!=='0';}catch(e){return true;}})();
 function openClock(sec){
@@ -1707,61 +1674,21 @@ function openClock(sec){
   if(!ok){try{window.location.href=u;ok=true;}catch(e){}}
   if(!ok){try{var a=document.createElement('a');a.href=u;a.target='_top';a.rel='noopener';a.style.display='none';document.body.appendChild(a);a.click();a.remove();}catch(e){}}
 }
-var lockMode=(function(){try{return localStorage.getItem('wl-lockmode')==='1';}catch(e){return false;}})();
+/* No sound is played by the app: the phone's own timer (see openClock) does the alerting, so music keeps playing. */
 function armKeepAlive(){
   try{if(navigator.wakeLock){navigator.wakeLock.request('screen').then(function(l){wlock=l;},function(){});}}catch(e){}
-  if(!lockMode) return;
-  try{
-    kInit(); kaudio.src=kUrls.silent; kaudio.volume=1;
-    try{if(navigator.audioSession) navigator.audioSession.type='ambient';}catch(e){}
-    var p=kaudio.play(); if(p&&p.catch) p.catch(function(){});
-    if('mediaSession' in navigator){
-      navigator.mediaSession.metadata=new MediaMetadata({title:T('מנוחה בין סטים'),artist:restName||''});
-      navigator.mediaSession.setActionHandler('pause',function(){}); navigator.mediaSession.setActionHandler('stop',stopRest);
-    }
-  }catch(e){}
 }
 function stopKeep(){
-  try{if(kaudio){kaudio.pause();}}catch(e){}
-  try{if(navigator.audioSession) navigator.audioSession.type='auto';}catch(e){}
   try{if(wlock){wlock.release();wlock=null;}}catch(e){}
-}
-function unlockAudio(){
-  try{var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; if(!ac) ac=new AC(); if(ac.state==='suspended') ac.resume();}catch(e){}
-}
-function beepOnce(){
-  if(!ac) return;
-  try{
-    [0,0.32].forEach(function(off){
-      var o=ac.createOscillator(), g=ac.createGain(), t=ac.currentTime+off;
-      o.type='square'; o.frequency.value=988;
-      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.5,t+0.01); g.gain.setValueAtTime(0.5,t+0.2); g.gain.exponentialRampToValueAtTime(0.0001,t+0.25);
-      o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t+0.27);
-    });
-  }catch(e){}
-}
-function showAlarm(){
-  alarmOn=true; setRestConfirm(false); $('aT').textContent=T('המנוחה הסתיימה'); $('aS').textContent=restName;
-  $('alarm').hidden=false;
-  unlockAudio(); clearInterval(beepT);
-  var played=false;
-  try{
-    kInit(); kaudio.src=kUrls.beep; kaudio.currentTime=0;
-    try{if(navigator.audioSession) navigator.audioSession.type='playback';}catch(e){}
-    var pp=kaudio.play();
-    if(pp&&pp.then){pp.then(function(){played=true;},function(){beepOnce();beepT=setInterval(beepOnce,900);});} else played=true;
-  }catch(e){beepOnce();beepT=setInterval(beepOnce,900);}
-  try{if(navigator.vibrate) navigator.vibrate([400,200,400,200,400]);}catch(e){}
 }
 function stopRest(){
   try{localStorage.removeItem('wl-restst');}catch(e){}
   clearInterval(restT); restT=null; restEnd=0; setRestConfirm(false); updateRing(0);
-  clearInterval(beepT); beepT=null; alarmOn=false; $('alarm').hidden=true; stopKeep();
-  try{if(navigator.vibrate) navigator.vibrate(0);}catch(e){}
+  stopKeep();
 }
 function restTick(){
   var left=Math.ceil((restEnd-Date.now())/1000);
-  if(left<=0){clearInterval(restT);restT=null;showAlarm();updateRing(0);return;}
+  if(left<=0){stopRest();return;}
   updateRing(left);
 }
 function startRest(sec,name){
@@ -1774,7 +1701,6 @@ function maybeStartRest(wid,ex){
   var r=P(w.kind).rows.filter(function(x){return x.id===ex;})[0];
   var sec=(r&&r.rest)||defRest; if(r&&sec) startRest(sec,r.name);
 }
-$('aStop').addEventListener('click',stopRest);
 (function(){
   try{
     var st=JSON.parse(localStorage.getItem('wl-restst')||'null');
@@ -1782,7 +1708,7 @@ $('aStop').addEventListener('click',stopRest);
     else localStorage.removeItem('wl-restst');
   }catch(e){}
 })();
-document.addEventListener('visibilitychange',function(){if(!document.hidden&&restEnd&&!alarmOn) restTick();});
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&restEnd) restTick();});
 var lastDay=null;
 setInterval(function(){
   Array.prototype.forEach.call(document.querySelectorAll('.rel'),function(el){var t=relTime(el.getAttribute('data-iso'));if(el.textContent!==t) el.textContent=t;});
@@ -2040,9 +1966,6 @@ function renderSettings(){
     '<div class="sgroup"><div class="sname">'+T('טיימר שעון (קיצורי דרך)')+'</div>'+
     '<div class="seg" role="group">'+[['0','כבוי'],['1','פעיל']].map(function(x){var on=(x[0]==='1')===clockMode;return '<button type="button" class="segb'+(on?' on':'')+'" data-act="clockmode" data-v="'+x[0]+'" aria-pressed="'+on+'">'+T(x[1])+'</button>';}).join('')+'</div>'+
     '<p class="sdesc mdesc" dir="auto">'+(lang==='en'?'Needs a shortcut named RestTimer: Shortcuts app, new shortcut, action Start Timer, duration = Shortcut Input, unit seconds. If it does not accept the input, add Get Numbers from Input first. For cancelling, create a second shortcut named CancelTimer with the single action Cancel Timer (Clock).':' צריך קיצור בשם RestTimer: באפליקציית קיצורי הדרך קיצור חדש, פעולה "Start Timer" (התחל טיימר), משך = "Shortcut Input" (קלט הקיצור), יחידה = שניות. אם לא מתקבל, הוסף לפניו "Get Numbers from Input". לביטול: קיצור שני בשם CancelTimer עם פעולה אחת "Cancel Timer" (Clock).')+'</p></div>'+
-    '<div class="sgroup"><div class="sname">'+T('טיימר בנעילת מסך')+'</div>'+
-    '<div class="seg" role="group">'+[['0','כבוי'],['1','פעיל']].map(function(x){var on=(x[0]==='1')===lockMode;return '<button type="button" class="segb'+(on?' on':'')+'" data-act="lockmode" data-v="'+x[0]+'" aria-pressed="'+on+'">'+T(x[1])+'</button>';}).join('')+'</div>'+
-    '<p class="sdesc mdesc">'+T('כבוי: המסך נשאר דלוק בזמן המנוחה ומוזיקה ממשיכה. פעיל: עובד גם כשהמסך נעול אבל עוצר מוזיקה.')+'</p></div>'+
     '<div class="sgroup"><div class="sname">'+T('אחסון')+'</div><p class="sdesc">'+where+'</p></div>';
 }
 function setStep(x){
