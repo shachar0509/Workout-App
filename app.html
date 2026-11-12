@@ -434,6 +434,9 @@ html.vsnap .xcard,html.vsnap .wcard{scroll-snap-align:start}
 .isb .nt{color:var(--muted);font-size:12px;margin:0 0 8px}
 .prf{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--line)}
 .prf span{color:var(--muted)}.prf b{text-align:end}
+.fbsetup{margin-top:10px;text-align:start}
+.fbsetup summary{cursor:pointer;color:var(--muted);font-size:14px;padding:8px 2px}
+.fbcfg{width:100%;box-sizing:border-box;border:1px solid var(--edge);border-radius:10px;background:#08090b;color:#fff;padding:10px;font:12px/1.4 ui-monospace,monospace;margin-bottom:8px}
 .welcome{position:fixed;inset:0;z-index:120;background:var(--bg);display:grid;place-items:center;padding:24px;overflow-y:auto}
 .welcome[hidden]{display:none!important}
 .wbox{width:min(360px,100%);display:flex;flex-direction:column;gap:10px;text-align:center}
@@ -525,6 +528,7 @@ html.vsnap .xcard,html.vsnap .wcard{scroll-snap-align:start}
   <button type="button" class="btn ghost" id="wgoogle" data-act="wgoogle" data-t>המשך עם Google</button>
   <p class="wnote" data-t>הנתונים נשמרים בענן ומסונכרנים בין מכשירים</p>
   <p class="hint" id="wErr" role="status"></p>
+  <div id="wSetup"></div>
 </div></div>
 <div class="iscrim" id="iscrim" hidden><div class="sheet" id="sheetInfo" role="dialog" aria-modal="true" aria-labelledby="isTitle" dir="rtl" data-dir>
   <h3 id="isTitle" dir="auto"></h3><div id="isBody"></div>
@@ -1166,7 +1170,7 @@ var HE_BP={'upper arms':'זרועות עליונות','upper legs':'רגליים
 var HE_SC={shoulders:'כתפיים',forearms:'אמות',biceps:'יד קדמית',triceps:'יד אחורית',hamstrings:'ירך אחורי',quadriceps:'ארבע ראשי',glutes:'ישבן',obliques:'אלכסוניים','hip flexors':'מכופפי ירך',chest:'חזה',trapezius:'טרפזים',traps:'טרפזים',deltoids:'כתפיים',calves:'תאומים',ankles:'קרסוליים',core:'ליבה','lower back':'גב תחתון','rotator cuff':'השרוול המסובב',soleus:'סוליאוס',rhomboids:'רומבואידים','wrist flexors':'מכופפי שורש כף היד','latissimus dorsi':'גב רחב',abdominals:'בטן','ankle stabilizers':'מייצבי קרסול','upper back':'גב עליון','wrist extensors':'פושטי שורש כף היד',lats:'גב רחב',wrists:'שורשי כפות הידיים',hands:'כפות ידיים'};
 function cap(s){return String(s).replace(/(^|[\s\-\/(])([a-z])/g,function(m,a,b){return a+b.toUpperCase();});}
 function lz(map,k){return lang==='he'&&map[k]?map[k]:cap(k);}
-Object.assign(EN,{'חיפוש תרגיל':'Search exercises','סינון':'Filter','לפי קבוצת שריר':'By muscle group','לפי ציוד':'By equipment','התרגילים שלי':'My exercises','סנן':'Apply','אפס':'Reset','הצג עוד':'Show more','לא נמצאו תרגילים':'No exercises found','סרטון':'Video','מידע על התרגיל':'Exercise info','הוראות':'Instructions','פרופיל':'Profile','קבוצת שריר יעד':'Target Muscle Group','אזור בגוף':'Body Part','ציוד נדרש':'Equipment Required','שרירים משניים':'Secondary Muscles','ההוראות זמינות באנגלית בלבד':'Instructions are available in English only','אין סרטון לתרגיל הזה.':'No video for this exercise.','תרגיל שיצרת, אין עליו מידע נוסף.':'A custom exercise: no extra info.','לא ניתן לטעון את הסרטון.':'Could not load the video.','קבוצת שריר ראשית':'Primary muscle group','שמור תרגיל':'Save exercise','כולל שרירים משניים':'Include secondary muscles','דורש משקל עבודה':'Needs a working weight','טיימר מנוחה':'Rest timer','התחל':'Start','חשבון':'Account','מחובר עם Google':'Signed in with Google','התנתק':'Sign out','מצב אורח: הנתונים נשמרים במכשיר הזה בלבד.':'Guest mode: data is stored on this device only.','חבר חשבון Google':'Connect a Google account','יוצר משתמש מסונכרן בענן ומעלה אליו את הנתונים הנוכחיים.':'Creates a cloud-synced user and uploads your current data to it.','כניסה עם Google תהיה זמינה אחרי הגדרת Firebase.':'Google sign-in will be available once Firebase is set up.','איך להמשיך?':'How would you like to continue?','המשך כאורח':'Continue as guest','המשך עם Google':'Continue with Google','הנתונים נשמרים במכשיר הזה בלבד':'Data is stored on this device only','הנתונים נשמרים בענן ומסונכרנים בין מכשירים':'Data is saved in the cloud and synced between devices','סיים אימון':'Finish workout','המשך אימון':'Resume workout','האימון הסתיים':'Workout finished','הסתיים':'Finished','אימון השלמה':'Make-up workout','סטים שחסרו ב-7 הימים האחרונים':'Sets missed in the last 7 days','אין תרגילים חסרים ב-7 הימים האחרונים':'Nothing missed in the last 7 days','סטים להשלמה':'Sets to make up','בחר לפחות סט אחד להשלמה':'Choose at least one set to make up','עד 12 סטים לכל תרגיל':'Up to 12 sets per exercise','ייצוא אימון':'Export workout','ייבוא אימון':'Import workout','יש לבחור חזרות ו-RPE':'Choose reps and RPE'});
+Object.assign(EN,{'חיפוש תרגיל':'Search exercises','סינון':'Filter','לפי קבוצת שריר':'By muscle group','לפי ציוד':'By equipment','התרגילים שלי':'My exercises','סנן':'Apply','אפס':'Reset','הצג עוד':'Show more','לא נמצאו תרגילים':'No exercises found','סרטון':'Video','מידע על התרגיל':'Exercise info','הוראות':'Instructions','פרופיל':'Profile','קבוצת שריר יעד':'Target Muscle Group','אזור בגוף':'Body Part','ציוד נדרש':'Equipment Required','שרירים משניים':'Secondary Muscles','ההוראות זמינות באנגלית בלבד':'Instructions are available in English only','אין סרטון לתרגיל הזה.':'No video for this exercise.','תרגיל שיצרת, אין עליו מידע נוסף.':'A custom exercise: no extra info.','לא ניתן לטעון את הסרטון.':'Could not load the video.','קבוצת שריר ראשית':'Primary muscle group','שמור תרגיל':'Save exercise','כולל שרירים משניים':'Include secondary muscles','דורש משקל עבודה':'Needs a working weight','טיימר מנוחה':'Rest timer','התחל':'Start','הגדרת חיבור ל-Google (חד-פעמי)':'Google connection setup (one-time)','הדבק כאן את הגדרות Firebase. הן נשמרות רק במכשיר הזה.':'Paste your Firebase config here. It is kept on this device only.','שמור הגדרות':'Save config','העתק קישור הגדרה (לשליחה פרטית)':'Copy setup link (send privately)','חשבון':'Account','מחובר עם Google':'Signed in with Google','התנתק':'Sign out','מצב אורח: הנתונים נשמרים במכשיר הזה בלבד.':'Guest mode: data is stored on this device only.','חבר חשבון Google':'Connect a Google account','יוצר משתמש מסונכרן בענן ומעלה אליו את הנתונים הנוכחיים.':'Creates a cloud-synced user and uploads your current data to it.','כניסה עם Google תהיה זמינה אחרי הגדרת Firebase.':'Google sign-in will be available once Firebase is set up.','איך להמשיך?':'How would you like to continue?','המשך כאורח':'Continue as guest','המשך עם Google':'Continue with Google','הנתונים נשמרים במכשיר הזה בלבד':'Data is stored on this device only','הנתונים נשמרים בענן ומסונכרנים בין מכשירים':'Data is saved in the cloud and synced between devices','סיים אימון':'Finish workout','המשך אימון':'Resume workout','האימון הסתיים':'Workout finished','הסתיים':'Finished','אימון השלמה':'Make-up workout','סטים שחסרו ב-7 הימים האחרונים':'Sets missed in the last 7 days','אין תרגילים חסרים ב-7 הימים האחרונים':'Nothing missed in the last 7 days','סטים להשלמה':'Sets to make up','בחר לפחות סט אחד להשלמה':'Choose at least one set to make up','עד 12 סטים לכל תרגיל':'Up to 12 sets per exercise','ייצוא אימון':'Export workout','ייבוא אימון':'Import workout','יש לבחור חזרות ו-RPE':'Choose reps and RPE'});
 var EXD=null, EXMAP={}, EXH={}, EXTHUMB={}, EXK={};
 function exOf(n){return EXD?(EXMAP[nameKey(n)]||null):null;}
 function dispName(n){if(lang==='he'){var h=EXH[nameKey(n)];if(h) return h;}return n;}
@@ -2173,11 +2177,12 @@ function accountHtml(){
   if(getMode()==='google'){
     var em=''; try{em=localStorage.getItem('wl-email')||'';}catch(e){}
     return '<div class="sgroup"><div class="sname">'+T('חשבון')+'</div><p class="sdesc" dir="auto">'+T('מחובר עם Google')+(em?': '+esc(em):'')+'</p>'+
-      '<button type="button" class="btn ghost" data-act="gout">'+T('התנתק')+'</button></div>';
+      '<button type="button" class="btn ghost" data-act="gout">'+T('התנתק')+'</button>'+
+      '<button type="button" class="btn ghost" data-act="fbshare" style="margin-top:8px">'+T('העתק קישור הגדרה (לשליחה פרטית)')+'</button><p class="hint fbmsg" role="status"></p></div>';
   }
   return '<div class="sgroup"><div class="sname">'+T('חשבון')+'</div><p class="sdesc">'+T('מצב אורח: הנתונים נשמרים במכשיר הזה בלבד.')+'</p>'+
     '<button type="button" class="btn" data-act="gconnect"'+(cfg?'':' disabled')+'>'+T('חבר חשבון Google')+'</button>'+
-    '<p class="sdesc">'+T(cfg?'יוצר משתמש מסונכרן בענן ומעלה אליו את הנתונים הנוכחיים.':'כניסה עם Google תהיה זמינה אחרי הגדרת Firebase.')+'</p><p class="hint" id="gMsg" role="status"></p></div>';
+    '<p class="sdesc">'+T(cfg?'יוצר משתמש מסונכרן בענן ומעלה אליו את הנתונים הנוכחיים.':'כניסה עם Google תהיה זמינה אחרי הגדרת Firebase.')+'</p><p class="hint" id="gMsg" role="status"></p>'+(cfg?'':fbSetupHtml())+'</div>';
 }
 function renderSettings(){
   var where=T(!store?'טוען…':(store.local?'הנתונים נשמרים רק בדפדפן הזה.':'הנתונים נשמרים בענן ומסתנכרנים בין מכשירים.'));
@@ -2246,7 +2251,34 @@ applyLang();
 render();
 showScreen('list');
 /* ---------- accounts: guest (this device only) or Google (cloud) ---------- */
-var FB_CONFIG={apiKey:'',authDomain:'',projectId:'',appId:''}; /* fill in after creating the Firebase project: see FIREBASE_SETUP.md */
+/* The Firebase web config is NOT stored in this repository. It is pasted once in the app (kept in this device's storage),
+   or arrives through a private link of the form  <app url>#fb=<base64 json>  (see FIREBASE_SETUP.md). */
+var FB_CONFIG={};
+function parseFbConfig(t){
+  var o={}; t=String(t||'').trim();
+  try{var j=JSON.parse(t); if(j&&typeof j==='object') o=j;}catch(e){}
+  if(!o.apiKey){var re=/([A-Za-z]\w*)\s*:\s*["']([^"']*)["']/g, m; while((m=re.exec(t))) o[m[1]]=m[2];}
+  var c={}; ['apiKey','authDomain','projectId','appId','storageBucket','messagingSenderId'].forEach(function(k){if(typeof o[k]==='string'&&o[k]) c[k]=o[k];});
+  return (c.apiKey&&c.projectId)?c:null;
+}
+function saveFbConfig(c){FB_CONFIG=c; try{localStorage.setItem('wl-fbcfg',JSON.stringify(c));}catch(e){}}
+(function(){
+  try{var st=localStorage.getItem('wl-fbcfg'); if(st){var c=parseFbConfig(st); if(c) FB_CONFIG=c;}}catch(e){}
+  try{
+    var m=/[#&]fb=([^&]+)/.exec(location.hash);
+    if(m){var c2=parseFbConfig(decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/'))))); if(c2) saveFbConfig(c2); history.replaceState(null,'',location.pathname+location.search);}
+  }catch(e){}
+})();
+function fbShareLink(){
+  var b=btoa(unescape(encodeURIComponent(JSON.stringify(FB_CONFIG)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  return location.origin+location.pathname.replace(/[^\/]*$/,'')+'#fb='+b;
+}
+function fbSetupHtml(){
+  return '<details class="fbsetup"><summary>'+T('הגדרת חיבור ל-Google (חד-פעמי)')+'</summary>'+
+    '<p class="sdesc">'+T('הדבק כאן את הגדרות Firebase. הן נשמרות רק במכשיר הזה.')+'</p>'+
+    '<textarea class="fbcfg" rows="5" dir="ltr" spellcheck="false" placeholder="{ apiKey: &quot;…&quot;, authDomain: &quot;…&quot;, projectId: &quot;…&quot;, appId: &quot;…&quot; }"></textarea>'+
+    '<button type="button" class="btn ghost" data-act="fbsave">'+T('שמור הגדרות')+'</button><p class="hint fbmsg" role="status"></p></details>';
+}
 var FB_VER='10.12.2', fbP=null, userDoc=null, SYNC_KEYS=['wl-lang','wl-method','wl-step','wl-clock','wl-rest','wl-timers'], rawSet=Storage.prototype.setItem, setPushT=null;
 function fbConfigured(){return !!(FB_CONFIG.apiKey&&FB_CONFIG.projectId);}
 function getMode(){try{return localStorage.getItem('wl-mode');}catch(e){return null;}}
@@ -2309,6 +2341,7 @@ function startApp(){
 function showWelcome(err){
   $('wgoogle').disabled=!fbConfigured();
   $('wErr').textContent=err||(fbConfigured()?'':T('כניסה עם Google תהיה זמינה אחרי הגדרת Firebase.'));
+  $('wSetup').innerHTML=fbConfigured()?'':fbSetupHtml();
   $('welcome').hidden=false; applyLang();
 }
 async function boot(){
@@ -2385,6 +2418,15 @@ document.addEventListener('click',function(e){
   else if(a==='wgoogle'){
     $('wErr').textContent='';
     googleSignIn().then(function(){setMode('google');boot();},function(){$('wErr').textContent=lang==='en'?'Sign-in failed. Try again.':'ההתחברות נכשלה. נסה שוב.';});
+  }
+  else if(a==='fbsave'){
+    var box=b.closest('.fbsetup'), c=parseFbConfig(box.querySelector('.fbcfg').value), mg=box.querySelector('.fbmsg');
+    if(!c){mg.textContent=lang==='en'?'Could not read the config. Paste the firebaseConfig block.':'לא הצלחתי לקרוא את ההגדרות. הדבק את בלוק firebaseConfig.';return;}
+    saveFbConfig(c); fbP=null; if($('welcome').hidden) renderSettings(); else showWelcome();
+  }
+  else if(a==='fbshare'){
+    var ml=b.parentNode.querySelector('.fbmsg'), lk=fbShareLink();
+    (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(lk):Promise.reject()).then(function(){ml.textContent=lang==='en'?'Link copied. Send it privately.':'הקישור הועתק. שלח אותו באופן פרטי.';},function(){ml.textContent=lk;});
   }
   else if(a==='gconnect') connectGoogle();
   else if(a==='gout') googleOut();
