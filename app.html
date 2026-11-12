@@ -529,7 +529,7 @@ html.vsnap .xcard,html.vsnap .wcard{scroll-snap-align:start}
     <label class="tchk"><input type="checkbox" id="timerChk"><span data-t>התראה בסיום מנוחה בין סטים</span></label>
     <div class="pick" id="pickList"></div>
     <input type="file" id="impFile" accept=".json,application/json" hidden>
-    <div class="mact"><button type="button" class="btn ghost" id="nClose" data-t>ביטול</button></div>
+    <div class="mact"><button type="button" class="btn" id="nStart" disabled data-t>התחל</button><button type="button" class="btn ghost" id="nClose" data-t>ביטול</button></div>
   </div>
   <div class="sheet" id="sheetEdit" role="dialog" aria-modal="true" aria-labelledby="eTitle" dir="rtl" data-dir hidden>
     <h3 id="eTitle" dir="auto"></h3>
@@ -1098,7 +1098,7 @@ var HE_BP={'upper arms':'זרועות עליונות','upper legs':'רגליים
 var HE_SC={shoulders:'כתפיים',forearms:'אמות',biceps:'יד קדמית',triceps:'יד אחורית',hamstrings:'ירך אחורי',quadriceps:'ארבע ראשי',glutes:'ישבן',obliques:'אלכסוניים','hip flexors':'מכופפי ירך',chest:'חזה',trapezius:'טרפזים',traps:'טרפזים',deltoids:'כתפיים',calves:'תאומים',ankles:'קרסוליים',core:'ליבה','lower back':'גב תחתון','rotator cuff':'השרוול המסובב',soleus:'סוליאוס',rhomboids:'רומבואידים','wrist flexors':'מכופפי שורש כף היד','latissimus dorsi':'גב רחב',abdominals:'בטן','ankle stabilizers':'מייצבי קרסול','upper back':'גב עליון','wrist extensors':'פושטי שורש כף היד',lats:'גב רחב',wrists:'שורשי כפות הידיים',hands:'כפות ידיים'};
 function cap(s){return String(s).replace(/(^|[\s\-\/(])([a-z])/g,function(m,a,b){return a+b.toUpperCase();});}
 function lz(map,k){return lang==='he'&&map[k]?map[k]:cap(k);}
-Object.assign(EN,{'חיפוש תרגיל':'Search exercises','סינון':'Filter','לפי קבוצת שריר':'By muscle group','לפי ציוד':'By equipment','התרגילים שלי':'My exercises','סנן':'Apply','אפס':'Reset','הצג עוד':'Show more','לא נמצאו תרגילים':'No exercises found','סרטון':'Video','מידע על התרגיל':'Exercise info','הוראות':'Instructions','פרופיל':'Profile','קבוצת שריר יעד':'Target Muscle Group','אזור בגוף':'Body Part','ציוד נדרש':'Equipment Required','שרירים משניים':'Secondary Muscles','ההוראות זמינות באנגלית בלבד':'Instructions are available in English only','אין סרטון לתרגיל הזה.':'No video for this exercise.','תרגיל שיצרת, אין עליו מידע נוסף.':'A custom exercise: no extra info.','לא ניתן לטעון את הסרטון.':'Could not load the video.','קבוצת שריר ראשית':'Primary muscle group','שמור תרגיל':'Save exercise','כולל שרירים משניים':'Include secondary muscles','דורש משקל עבודה':'Needs a working weight','טיימר מנוחה':'Rest timer','ייצוא תכנית':'Export plan','ייבוא תכנית':'Import plan','יש לבחור חזרות ו-RPE':'Choose reps and RPE'});
+Object.assign(EN,{'חיפוש תרגיל':'Search exercises','סינון':'Filter','לפי קבוצת שריר':'By muscle group','לפי ציוד':'By equipment','התרגילים שלי':'My exercises','סנן':'Apply','אפס':'Reset','הצג עוד':'Show more','לא נמצאו תרגילים':'No exercises found','סרטון':'Video','מידע על התרגיל':'Exercise info','הוראות':'Instructions','פרופיל':'Profile','קבוצת שריר יעד':'Target Muscle Group','אזור בגוף':'Body Part','ציוד נדרש':'Equipment Required','שרירים משניים':'Secondary Muscles','ההוראות זמינות באנגלית בלבד':'Instructions are available in English only','אין סרטון לתרגיל הזה.':'No video for this exercise.','תרגיל שיצרת, אין עליו מידע נוסף.':'A custom exercise: no extra info.','לא ניתן לטעון את הסרטון.':'Could not load the video.','קבוצת שריר ראשית':'Primary muscle group','שמור תרגיל':'Save exercise','כולל שרירים משניים':'Include secondary muscles','דורש משקל עבודה':'Needs a working weight','טיימר מנוחה':'Rest timer','התחל':'Start','ייצוא אימון':'Export workout','ייבוא אימון':'Import workout','יש לבחור חזרות ו-RPE':'Choose reps and RPE'});
 var EXD=null, EXMAP={}, EXH={}, EXTHUMB={}, EXK={};
 function exOf(n){return EXD?(EXMAP[nameKey(n)]||null):null;}
 function dispName(n){if(lang==='he'){var h=EXH[nameKey(n)];if(h) return h;}return n;}
@@ -1411,10 +1411,11 @@ document.addEventListener('click',function(e){
   if(confirmDel&&!(t.closest&&t.closest('.wwrap.cf'))){e.preventDefault();e.stopPropagation();confirmDel=null;render();return;}
   if(modal&&modal.kind==='new'&&pickDel&&!(t.closest&&t.closest('.prow.cf'))){e.preventDefault();e.stopPropagation();pickDel=null;renderPickList();}
 },true);
-var pickMsg='';
-function planFileName(){var d=new Date();return 'workout-plan-'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'.json';}
+var pickMsg='', pickSel=null;
+function planFileName(n){var d=new Date(), sl=String(n||'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,20);return 'workout-'+(sl?sl+'-':'')+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'.json';}
 function exportPlan(){
-  var ex={}, ws=kindIds().filter(function(k){return !PLAN[k].deleted;}).map(function(k){
+  if(!pickSel||!PLAN[pickSel]) return;
+  var ex={}, ws=[pickSel].filter(function(k){return k&&PLAN[k]&&!PLAN[k].deleted;}).map(function(k){
     var pl=PLAN[k];
     return {name:pl.name,sub:pl.sub||'',rows:pl.rows.map(function(r){
       var o={name:r.name,sets:r.sets}; if(r.step) o.step=r.step; if(r.rest) o.rest=r.rest; if(r.ss) o.ss=1;
@@ -1422,11 +1423,11 @@ function exportPlan(){
       return o;
     })};
   });
-  var json=JSON.stringify({app:'workout-log',type:'plan',v:1,workouts:ws,exercises:ex},null,1), name=planFileName();
+  var json=JSON.stringify({app:'workout-log',type:'plan',v:1,workouts:ws,exercises:ex},null,1), name=planFileName(PLAN[pickSel]&&PLAN[pickSel].name);
   function download(){
     var a=document.createElement('a'), u=URL.createObjectURL(new Blob([json],{type:'application/json'}));
     a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(u);},4000);
-    pickMsg=lang==='en'?'Plan file saved':'קובץ התכנית נשמר'; renderPickList();
+    pickMsg=lang==='en'?'Workout file saved':'קובץ האימון נשמר'; renderPickList();
   }
   try{
     var f=new File([json],name,{type:'application/json'});
@@ -1471,31 +1472,32 @@ function importPlan(text){
   }
   if(!n) return fail();
   syncLibrary(); render(); renderPlan();
-  pickMsg=lang==='en'?(n+' workout'+(n>1?'s':'')+' imported'):('יובאו '+n+' אימונים'); renderPickList();
+  pickMsg=lang==='en'?(n+' workout'+(n>1?'s':'')+' imported'):(n===1?'יובא אימון אחד':'יובאו '+n+' אימונים'); renderPickList();
 }
 function renderPickList(){
   sheetNew.classList.toggle('dimming',pickDel!=null);
   pickList.innerHTML=kindIds().filter(function(k){return !PLAN[k].deleted;}).map(function(k){
     var conf=(pickDel===k);
-    return '<div class="prow'+(conf?' cf':'')+'"><button type="button" class="wrow" data-act="add" data-v="'+k+'"><span class="wn"><b dir="auto">'+esc(PLAN[k].name)+'</b><small>'+esc(T(PLAN[k].sub))+'</small></span><span class="wc">'+PLAN[k].rows.length+' '+T('תרגילים')+'</span></button>'+
+    return '<div class="prow'+(conf?' cf':'')+'"><button type="button" class="wrow'+(pickSel===k?' on':'')+'" data-act="psel" data-v="'+k+'" aria-pressed="'+(pickSel===k)+'"><span class="wn"><b dir="auto">'+esc(PLAN[k].name)+'</b><small>'+esc(T(PLAN[k].sub))+'</small></span><span class="wc">'+PLAN[k].rows.length+' '+T('תרגילים')+'</span></button>'+
       (conf
         ? '<button type="button" class="btn ghost" data-act="tdelno" aria-label="'+T('ביטול')+'" title="'+T('ביטול')+'" style="color:var(--muted)">'+IC_NO+'</button>'
         : '<button type="button" class="btn ghost" data-act="tedit" data-v="'+k+'" aria-label="'+T('ערוך')+' '+esc(PLAN[k].name)+'" title="'+T('ערוך')+'">'+IC_PEN+'</button>')+
       '<button type="button" class="btn ghost" data-act="'+(conf?'tdelyes':'tdel')+'" data-v="'+k+'" aria-label="'+T('מחק')+'" title="'+T('מחק')+'"'+(conf?' style="color:#ff6b7d;border-color:rgba(255,42,69,.7)"':' style="color:var(--muted)"')+'>'+IC_DEL+'</button></div>';
   }).join('')+'<button type="button" class="btn tnew" data-act="tnew">'+T('צור אימון חדש')+'</button>'+
-    '<div class="mact" style="margin-top:10px"><button type="button" class="btn ghost" data-act="texport">'+T('ייצוא תכנית')+'</button><button type="button" class="btn ghost" data-act="timport">'+T('ייבוא תכנית')+'</button></div>'+
+    '<div class="mact" style="margin-top:10px"><button type="button" class="btn ghost" data-act="texport"'+(pickSel?'':' disabled')+'>'+T('ייצוא אימון')+'</button><button type="button" class="btn ghost" data-act="timport"'+(pickSel?' disabled':'')+'>'+T('ייבוא אימון')+'</button></div>'+
     (pickMsg?'<p class="hint" role="status" style="margin-top:8px">'+esc(pickMsg)+'</p>':'');
+  var ns=$('nStart'); if(ns) ns.disabled=!pickSel;
 }
 function delTemplate(k){
   var p=PLAN[k]; if(!p) return;
-  p.deleted=true; pickDel=null;
+  p.deleted=true; pickDel=null; if(pickSel===k) pickSel=null;
   var meta={rows:p.rows,name:p.name,sub:p.sub||'',deleted:true}; if(p.custom) meta.custom=1;
   Promise.resolve(store?store.saveTpl(k,meta):null).then(function(){setStatus('ok');},function(){setStatus('err');});
   renderPickList(); render(); renderPlan();
 }
 function openNew(){
   if(!ready||creating) return;
-  modal={kind:'new'}; pickDel=null; pickMsg=''; if(timerChk) timerChk.checked=false;
+  modal={kind:'new'}; pickDel=null; pickMsg=''; pickSel=null; if(timerChk) timerChk.checked=false;
   renderPickList();
   sheetAdd.hidden=true; sheetPlan.hidden=true; sheetEdit.hidden=true; sheetNew.hidden=false; scrim.hidden=false;
   document.body.style.overflow='hidden';
@@ -1562,7 +1564,7 @@ document.addEventListener('click',function(e){
   if(e.target===scrim){if(!sheetRest.hidden){closeRest();return;}closeModal();return;}
   var b=e.target.closest('[data-act]'); if(!b) return;
   var a=b.dataset.act, v=b.dataset.v;
-  if(a==='add') addWorkout(v);
+  if(a==='psel'){pickSel=(pickSel===v)?null:v;pickMsg='';renderPickList();}
   else if(a==='lf'){lf=v;renderList();try{window.scrollTo(0,document.documentElement.scrollHeight);}catch(err){}}
   else if(a==='cprev'||a==='cnext'||a==='cpy'||a==='cny') calMove(a);
   else if(a==='calday'){calSel=v;renderCal();}
@@ -1636,6 +1638,7 @@ mCancel.addEventListener('click',closeModal);
 mDel.addEventListener('click',deleteModal);
 pClose.addEventListener('click',closeModal);
 nClose.addEventListener('click',closeModal);
+$('nStart').addEventListener('click',function(){if(pickSel) addWorkout(pickSel);});
 hClose.addEventListener('click',closeModal);
 eCancel.addEventListener('click',openNew);
 sheetEdit.addEventListener('click',function(e){
@@ -1839,7 +1842,7 @@ document.addEventListener('keydown',function(e){
   if(e.key==='Enter'&&e.target===fW&&modal.kind==='add'){e.preventDefault();if(validateAdd()) saveModal();return;}
   if(e.key==='Tab'){
     if(modal.kind==='rest') return;
-    var f=(modal.kind==='help'?[hClose]:modal.kind==='edit'?Array.prototype.slice.call(sheetEdit.querySelectorAll('input,select,button')):modal.kind==='new'?Array.prototype.slice.call(pickList.querySelectorAll('button')).concat([nClose]):modal.kind==='add'?[fW,sR,sP,mSave,mCancel,mDel]:[tR,tP,pClose]).filter(function(x){return !x.hidden&&!x.disabled;});
+    var f=(modal.kind==='help'?[hClose]:modal.kind==='edit'?Array.prototype.slice.call(sheetEdit.querySelectorAll('input,select,button')):modal.kind==='new'?Array.prototype.slice.call(pickList.querySelectorAll('button')).concat([$('nStart'),nClose]):modal.kind==='add'?[fW,sR,sP,mSave,mCancel,mDel]:[tR,tP,pClose]).filter(function(x){return !x.hidden&&!x.disabled;});
     var i=f.indexOf(document.activeElement);
     if(e.shiftKey&&i<=0){e.preventDefault();f[f.length-1].focus();}
     else if(!e.shiftKey&&i===f.length-1){e.preventDefault();f[0].focus();}
