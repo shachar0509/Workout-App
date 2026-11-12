@@ -432,6 +432,12 @@ html.vsnap .xcard,html.vsnap .wcard{scroll-snap-align:start}
 .isb .nt{color:var(--muted);font-size:12px;margin:0 0 8px}
 .prf{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--line)}
 .prf span{color:var(--muted)}.prf b{text-align:end}
+.nhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
+.nhead h3{margin:0}
+.ntools{display:inline-flex;gap:2px;flex:none}
+.ibtn{width:40px;height:40px;display:grid;place-items:center;padding:0;background:none;border:0;color:#e6e8ec;cursor:pointer}
+.ibtn .ico{width:22px;height:22px}
+.ibtn:disabled{opacity:.28;cursor:not-allowed}
 .rtog{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:17px;border:1px solid var(--edge);background:var(--metal);color:var(--muted);font:600 13px var(--body);cursor:pointer;margin-inline-start:auto;flex:none}
 .rtog .dot{width:10px;height:10px;border-radius:50%;background:#555}
 .rtog.on{border-color:var(--red-hi);color:#fff}
@@ -525,7 +531,10 @@ html.vsnap .xcard,html.vsnap .wcard{scroll-snap-align:start}
     </div>
   </div>
   <div class="sheet" id="sheetNew" role="dialog" aria-modal="true" aria-labelledby="nTitle" dir="rtl" data-dir hidden>
-    <h3 id="nTitle" data-t>בחר אימון להתחלה</h3>
+    <div class="nhead"><h3 id="nTitle" data-t>בחר אימון להתחלה</h3><span class="ntools">
+      <button type="button" class="ibtn" id="nImp" data-act="timport" aria-label="ייבוא אימון" title="ייבוא אימון" data-tal="ייבוא אימון" data-ttl="ייבוא אימון"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg></button>
+      <button type="button" class="ibtn" id="nExp" data-act="texport" aria-label="ייצוא אימון" title="ייצוא אימון" data-tal="ייצוא אימון" data-ttl="ייצוא אימון" disabled><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg></button>
+    </span></div>
     <label class="tchk"><input type="checkbox" id="timerChk"><span data-t>התראה בסיום מנוחה בין סטים</span></label>
     <div class="pick" id="pickList"></div>
     <input type="file" id="impFile" accept=".json,application/json" hidden>
@@ -593,6 +602,7 @@ function applyLang(){
   Array.prototype.forEach.call(document.querySelectorAll('[data-t]'),function(el){if(!el.dataset.he) el.dataset.he=el.textContent.trim(); el.textContent=T(el.dataset.he);});
   Array.prototype.forEach.call(document.querySelectorAll('[data-tph]'),function(el){el.setAttribute('placeholder',T(el.getAttribute('data-tph')));});
   Array.prototype.forEach.call(document.querySelectorAll('[data-tal]'),function(el){el.setAttribute('aria-label',T(el.getAttribute('data-tal')));});
+  Array.prototype.forEach.call(document.querySelectorAll('[data-ttl]'),function(el){el.setAttribute('title',T(el.getAttribute('data-ttl')));});
   if(typeof applyMethodUI==='function') applyMethodUI();
 }
 var method='rpe';
@@ -1484,9 +1494,9 @@ function renderPickList(){
         : '<button type="button" class="btn ghost" data-act="tedit" data-v="'+k+'" aria-label="'+T('ערוך')+' '+esc(PLAN[k].name)+'" title="'+T('ערוך')+'">'+IC_PEN+'</button>')+
       '<button type="button" class="btn ghost" data-act="'+(conf?'tdelyes':'tdel')+'" data-v="'+k+'" aria-label="'+T('מחק')+'" title="'+T('מחק')+'"'+(conf?' style="color:#ff6b7d;border-color:rgba(255,42,69,.7)"':' style="color:var(--muted)"')+'>'+IC_DEL+'</button></div>';
   }).join('')+'<button type="button" class="btn tnew" data-act="tnew">'+T('צור אימון חדש')+'</button>'+
-    '<div class="mact" style="margin-top:10px"><button type="button" class="btn ghost" data-act="texport"'+(pickSel?'':' disabled')+'>'+T('ייצוא אימון')+'</button><button type="button" class="btn ghost" data-act="timport"'+(pickSel?' disabled':'')+'>'+T('ייבוא אימון')+'</button></div>'+
     (pickMsg?'<p class="hint" role="status" style="margin-top:8px">'+esc(pickMsg)+'</p>':'');
   var ns=$('nStart'); if(ns) ns.disabled=!pickSel;
+  var ni=$('nImp'), ne=$('nExp'); if(ni) ni.disabled=!!pickSel; if(ne) ne.disabled=!pickSel;
 }
 function delTemplate(k){
   var p=PLAN[k]; if(!p) return;
