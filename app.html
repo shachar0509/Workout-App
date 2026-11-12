@@ -1119,7 +1119,7 @@ function exLoad(){
   var KEY='wl-exdata', cached=null;
   try{cached=localStorage.getItem(KEY);if(cached) exInit(JSON.parse(cached));}catch(e){cached=null;}
   try{
-    fetch('exercises-data.json').then(function(r){if(!r.ok) throw new Error(r.status);return r.text();}).then(function(t){
+    fetch('exercises-data.json',{cache:'no-cache'}).then(function(r){if(!r.ok) throw new Error(r.status);return r.text();}).then(function(t){
       if(t===cached) return;
       var d=JSON.parse(t); exInit(d);
       try{localStorage.setItem(KEY,t);}catch(e){}
