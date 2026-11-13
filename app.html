@@ -434,6 +434,16 @@ html.vsnap .xcard,html.vsnap .wcard{scroll-snap-align:start}
 .isb .nt{color:var(--muted);font-size:12px;margin:0 0 8px}
 .prf{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--line)}
 .prf span{color:var(--muted)}.prf b{text-align:end}
+.fbsetup{margin-top:10px;text-align:start}
+.fbsetup summary{cursor:pointer;color:var(--muted);font-size:14px;padding:8px 2px}
+.fbcfg{width:100%;box-sizing:border-box;border:1px solid var(--edge);border-radius:10px;background:#08090b;color:#fff;padding:10px;font:12px/1.4 ui-monospace,monospace;margin-bottom:8px}
+.welcome{position:fixed;inset:0;z-index:120;background:var(--bg);display:grid;place-items:center;padding:24px;overflow-y:auto}
+.welcome[hidden]{display:none!important}
+.wbox{width:min(360px,100%);display:flex;flex-direction:column;gap:10px;text-align:center}
+.wbox h1{margin:0 0 4px}
+.wsub{margin:0 0 14px;color:var(--muted);font-size:17px}
+.wnote{margin:0 0 14px;color:var(--muted);font-size:13px}
+.wbox .btn{width:100%}
 .finbar{display:flex;flex-direction:column;gap:8px;margin:16px 0 8px}
 .finbar .btn{width:100%}
 .finnote{margin:0;color:var(--muted);font-size:14px;text-align:center}
@@ -510,6 +520,17 @@ html.vsnap .xcard,html.vsnap .wcard{scroll-snap-align:start}
     <span data-t>התקדמות</span>
   </button>
 </nav>
+<input type="file" id="bkFile" accept=".json,application/json" hidden>
+<div id="welcome" class="welcome" hidden><div class="wbox" dir="rtl" data-dir>
+  <h1 data-t>יומן אימונים</h1>
+  <p class="wsub" data-t>איך להמשיך?</p>
+  <button type="button" class="btn" data-act="wguest" data-t>המשך כאורח</button>
+  <p class="wnote" data-t>הנתונים נשמרים במכשיר הזה בלבד</p>
+  <button type="button" class="btn ghost" id="wgoogle" data-act="wgoogle" data-t>המשך עם Google</button>
+  <p class="wnote" data-t>הנתונים נשמרים בענן ומסונכרנים בין מכשירים</p>
+  <p class="hint" id="wErr" role="status"></p>
+  <div id="wSetup"></div>
+</div></div>
 <div class="iscrim" id="iscrim" hidden><div class="sheet" id="sheetInfo" role="dialog" aria-modal="true" aria-labelledby="isTitle" dir="rtl" data-dir>
   <h3 id="isTitle" dir="auto"></h3><div id="isBody"></div>
   <div class="mact"><button type="button" class="btn ghost" data-act="isclose" data-t>סגור</button></div>
@@ -829,6 +850,11 @@ function makeDb(db){
     saveLib:function(e){var o={key:e.key,name:e.name,ids:e.ids};if(e.m) o.m=e.m;return db.collection('exercises').doc(hid(e.key)).set(o);}
   };
 }
+function makeFs(ud){
+  var st=makeDb(ud);
+  st.writeSets=function(id,ex,arr){var o={};o['sets.'+ex]=arr;return ud.collection('workouts').doc(id).update(o);};
+  return st;
+}
 function makeLocal(){
   var KEY='workout-log-v3', list=[], cb=null;
   try{list=JSON.parse(localStorage.getItem(KEY)||'[]');}catch(e){list=[];}
@@ -894,7 +920,9 @@ function isFull(w){
   return total>0&&done>=total;
 }
 function finHtml(w){
-  if(w.fin) return '<div class="finbar"><p class="finnote">'+T('האימון הסתיים')+' · '+fmtDate(w.fin)+'</p><button type="button" class="btn ghost" data-act="reopen">'+T('המשך אימון')+'</button></div>';
+  if(w.fin) return '<div class="finbar"><p class="finnote">'+T('האימון הסתיים')+' · '+fmtDate(w.fin)+'</p>'+
+    ((getMode()==='guest'&&backupAge()>864e5)?'<button type="button" class="btn" data-act="bkexport">'+T('גבה לקובץ')+'</button>':'')+
+    '<button type="button" class="btn ghost" data-act="reopen">'+T('המשך אימון')+'</button></div>';
   var miss=0; PW(w).rows.forEach(function(r){miss+=Math.max(0,r.sets-getSets(w.id,r.id).length);});
   return '<div class="finbar">'+(miss?'<p class="finnote">'+(lang==='en'?miss+' planned sets are not done. You can finish anyway.':'חסרים '+miss+' סטים מהתכנון. אפשר לסיים בכל זאת.')+'</p>':'')+'<button type="button" class="btn" data-act="finish">'+T('סיים אימון')+'</button></div>';
 }
@@ -1145,7 +1173,7 @@ var HE_BP={'upper arms':'זרועות עליונות','upper legs':'רגליים
 var HE_SC={shoulders:'כתפיים',forearms:'אמות',biceps:'יד קדמית',triceps:'יד אחורית',hamstrings:'ירך אחורי',quadriceps:'ארבע ראשי',glutes:'ישבן',obliques:'אלכסוניים','hip flexors':'מכופפי ירך',chest:'חזה',trapezius:'טרפזים',traps:'טרפזים',deltoids:'כתפיים',calves:'תאומים',ankles:'קרסוליים',core:'ליבה','lower back':'גב תחתון','rotator cuff':'השרוול המסובב',soleus:'סוליאוס',rhomboids:'רומבואידים','wrist flexors':'מכופפי שורש כף היד','latissimus dorsi':'גב רחב',abdominals:'בטן','ankle stabilizers':'מייצבי קרסול','upper back':'גב עליון','wrist extensors':'פושטי שורש כף היד',lats:'גב רחב',wrists:'שורשי כפות הידיים',hands:'כפות ידיים'};
 function cap(s){return String(s).replace(/(^|[\s\-\/(])([a-z])/g,function(m,a,b){return a+b.toUpperCase();});}
 function lz(map,k){return lang==='he'&&map[k]?map[k]:cap(k);}
-Object.assign(EN,{'חיפוש תרגיל':'Search exercises','סינון':'Filter','לפי קבוצת שריר':'By muscle group','לפי ציוד':'By equipment','התרגילים שלי':'My exercises','סנן':'Apply','אפס':'Reset','הצג עוד':'Show more','לא נמצאו תרגילים':'No exercises found','סרטון':'Video','מידע על התרגיל':'Exercise info','הוראות':'Instructions','פרופיל':'Profile','קבוצת שריר יעד':'Target Muscle Group','אזור בגוף':'Body Part','ציוד נדרש':'Equipment Required','שרירים משניים':'Secondary Muscles','ההוראות זמינות באנגלית בלבד':'Instructions are available in English only','אין סרטון לתרגיל הזה.':'No video for this exercise.','תרגיל שיצרת, אין עליו מידע נוסף.':'A custom exercise: no extra info.','לא ניתן לטעון את הסרטון.':'Could not load the video.','קבוצת שריר ראשית':'Primary muscle group','שמור תרגיל':'Save exercise','כולל שרירים משניים':'Include secondary muscles','דורש משקל עבודה':'Needs a working weight','טיימר מנוחה':'Rest timer','התחל':'Start','סיים אימון':'Finish workout','המשך אימון':'Resume workout','האימון הסתיים':'Workout finished','הסתיים':'Finished','אימון השלמה':'Make-up workout','סטים שחסרו ב-7 הימים האחרונים':'Sets missed in the last 7 days','אין תרגילים חסרים ב-7 הימים האחרונים':'Nothing missed in the last 7 days','סטים להשלמה':'Sets to make up','בחר לפחות סט אחד להשלמה':'Choose at least one set to make up','עד 12 סטים לכל תרגיל':'Up to 12 sets per exercise','ייצוא אימון':'Export workout','ייבוא אימון':'Import workout','יש לבחור חזרות ו-RPE':'Choose reps and RPE'});
+Object.assign(EN,{'חיפוש תרגיל':'Search exercises','סינון':'Filter','לפי קבוצת שריר':'By muscle group','לפי ציוד':'By equipment','התרגילים שלי':'My exercises','סנן':'Apply','אפס':'Reset','הצג עוד':'Show more','לא נמצאו תרגילים':'No exercises found','סרטון':'Video','מידע על התרגיל':'Exercise info','הוראות':'Instructions','פרופיל':'Profile','קבוצת שריר יעד':'Target Muscle Group','אזור בגוף':'Body Part','ציוד נדרש':'Equipment Required','שרירים משניים':'Secondary Muscles','ההוראות זמינות באנגלית בלבד':'Instructions are available in English only','אין סרטון לתרגיל הזה.':'No video for this exercise.','תרגיל שיצרת, אין עליו מידע נוסף.':'A custom exercise: no extra info.','לא ניתן לטעון את הסרטון.':'Could not load the video.','קבוצת שריר ראשית':'Primary muscle group','שמור תרגיל':'Save exercise','כולל שרירים משניים':'Include secondary muscles','דורש משקל עבודה':'Needs a working weight','טיימר מנוחה':'Rest timer','התחל':'Start','גיבוי':'Backup','שומר את כל הנתונים לקובץ, כדי שלא יאבדו אם האפליקציה נמחקת או מותקנת מחדש.':'Saves all your data to a file so it is not lost if the app is deleted or reinstalled.','גיבוי אחרון':'Last backup','עדיין לא גובה':'Not backed up yet','גבה לקובץ':'Back up to a file','שחזר מקובץ':'Restore from a file','הגדרת חיבור ל-Google (חד-פעמי)':'Google connection setup (one-time)','הדבק כאן את הגדרות Firebase. הן נשמרות רק במכשיר הזה.':'Paste your Firebase config here. It is kept on this device only.','שמור הגדרות':'Save config','העתק קישור הגדרה (לשליחה פרטית)':'Copy setup link (send privately)','חשבון':'Account','מחובר עם Google':'Signed in with Google','התנתק':'Sign out','מצב אורח: הנתונים נשמרים במכשיר הזה בלבד.':'Guest mode: data is stored on this device only.','חבר חשבון Google':'Connect a Google account','יוצר משתמש מסונכרן בענן ומעלה אליו את הנתונים הנוכחיים.':'Creates a cloud-synced user and uploads your current data to it.','כניסה עם Google תהיה זמינה אחרי הגדרת Firebase.':'Google sign-in will be available once Firebase is set up.','איך להמשיך?':'How would you like to continue?','המשך כאורח':'Continue as guest','המשך עם Google':'Continue with Google','הנתונים נשמרים במכשיר הזה בלבד':'Data is stored on this device only','הנתונים נשמרים בענן ומסונכרנים בין מכשירים':'Data is saved in the cloud and synced between devices','סיים אימון':'Finish workout','המשך אימון':'Resume workout','האימון הסתיים':'Workout finished','הסתיים':'Finished','אימון השלמה':'Make-up workout','סטים שחסרו ב-7 הימים האחרונים':'Sets missed in the last 7 days','אין תרגילים חסרים ב-7 הימים האחרונים':'Nothing missed in the last 7 days','סטים להשלמה':'Sets to make up','בחר לפחות סט אחד להשלמה':'Choose at least one set to make up','עד 12 סטים לכל תרגיל':'Up to 12 sets per exercise','ייצוא אימון':'Export workout','ייבוא אימון':'Import workout','יש לבחור חזרות ו-RPE':'Choose reps and RPE'});
 var EXD=null, EXMAP={}, EXH={}, EXTHUMB={}, EXK={};
 function exOf(n){return EXD?(EXMAP[nameKey(n)]||null):null;}
 function dispName(n){if(lang==='he'){var h=EXH[nameKey(n)];if(h) return h;}return n;}
@@ -1943,6 +1971,10 @@ function onEditField(e){
 }
 editList.addEventListener('input',onEditField);
 editList.addEventListener('change',onEditField);
+$('bkFile').addEventListener('change',function(){
+  var f=this.files&&this.files[0]; if(!f) return; if(f.size>20000000) return;
+  var r=new FileReader(); r.onload=function(){importBackup(String(r.result||''));}; r.readAsText(f);
+});
 $('impFile').addEventListener('change',function(){
   var f=this.files&&this.files[0]; if(!f) return;
   if(f.size>2000000){pickMsg=lang==='en'?'File too large':'הקובץ גדול מדי'; renderPickList(); return;}
@@ -2147,6 +2179,55 @@ function renderProg(){
   progBody.innerHTML=h;
 }
 scrProg.addEventListener('change',function(e){if(e.target&&e.target.id==='pSel'){progKey=e.target.value;renderProg();}});
+function backupAge(){var t=null;try{t=localStorage.getItem('wl-lastbackup');}catch(e){} var ms=t?Date.now()-new Date(t).getTime():Infinity; return isNaN(ms)?Infinity:ms;}
+function backupHtml(){
+  var t=null; try{t=localStorage.getItem('wl-lastbackup');}catch(e){}
+  return '<div class="sgroup"><div class="sname">'+T('גיבוי')+'</div>'+
+    '<p class="sdesc">'+T('שומר את כל הנתונים לקובץ, כדי שלא יאבדו אם האפליקציה נמחקת או מותקנת מחדש.')+'</p>'+
+    '<p class="sdesc">'+T('גיבוי אחרון')+': '+(t?relSpan(t):T('עדיין לא גובה'))+'</p>'+
+    '<div class="mact"><button type="button" class="btn" data-act="bkexport">'+T('גבה לקובץ')+'</button><button type="button" class="btn ghost" data-act="bkimport">'+T('שחזר מקובץ')+'</button></div>'+
+    '<p class="hint" id="bkMsg" role="status"></p></div>';
+}
+function backupJson(){
+  var ps=function(k,d){try{return JSON.parse(localStorage.getItem(k)||'null')||d;}catch(e){return d;}}, st={};
+  SYNC_KEYS.forEach(function(k){var v=null;try{v=localStorage.getItem(k);}catch(e){} if(v!==null) st[k]=v;});
+  return JSON.stringify({app:'workout-log',type:'backup',v:1,exportedAt:new Date().toISOString(),workouts:ps('workout-log-v3',[]),templates:ps('workout-log-tpl',{}),library:ps('workout-log-lib',{}),settings:st},null,1);
+}
+function exportBackup(){
+  var json=backupJson(), d=new Date(), name='workout-backup-'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'.json';
+  function done(){try{localStorage.setItem('wl-lastbackup',new Date().toISOString());}catch(e){} var m=$('bkMsg'); if(m) m.textContent=lang==='en'?'Backup saved':'הגיבוי נשמר'; if(scr==='set') renderSettings(); render();}
+  function download(){var a=document.createElement('a'),u=URL.createObjectURL(new Blob([json],{type:'application/json'}));a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u);},4000);done();}
+  try{
+    var f=new File([json],name,{type:'application/json'});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:name}).then(done,function(e){if(!e||e.name!=='AbortError') download();});return;}
+  }catch(e){}
+  download();
+}
+function importBackup(text){
+  var m=$('bkMsg'), d; try{d=JSON.parse(text);}catch(e){d=null;}
+  if(!d||d.app!=='workout-log'||d.type!=='backup'||!Array.isArray(d.workouts)){if(m) m.textContent=lang==='en'?'This is not a valid backup file':'הקובץ אינו קובץ גיבוי תקין';return;}
+  if(!confirm(lang==='en'?'Replace ALL data on this device with the backup?':'להחליף את כל הנתונים במכשיר בנתוני הגיבוי?')) return;
+  try{
+    localStorage.setItem('workout-log-v3',JSON.stringify(d.workouts));
+    localStorage.setItem('workout-log-tpl',JSON.stringify(d.templates||{}));
+    localStorage.setItem('workout-log-lib',JSON.stringify(d.library||{}));
+    Object.keys(d.settings||{}).forEach(function(k){if(SYNC_KEYS.indexOf(k)>=0&&typeof d.settings[k]==='string') localStorage.setItem(k,d.settings[k]);});
+    localStorage.setItem('wl-mode','guest'); localStorage.setItem('wl-lastbackup',new Date().toISOString());
+  }catch(e){if(m) m.textContent=lang==='en'?'Restore failed':'השחזור נכשל';return;}
+  location.reload();
+}
+function accountHtml(){
+  var cfg=fbConfigured();
+  if(getMode()==='google'){
+    var em=''; try{em=localStorage.getItem('wl-email')||'';}catch(e){}
+    return '<div class="sgroup"><div class="sname">'+T('חשבון')+'</div><p class="sdesc" dir="auto">'+T('מחובר עם Google')+(em?': '+esc(em):'')+'</p>'+
+      '<button type="button" class="btn ghost" data-act="gout">'+T('התנתק')+'</button>'+
+      '<button type="button" class="btn ghost" data-act="fbshare" style="margin-top:8px">'+T('העתק קישור הגדרה (לשליחה פרטית)')+'</button><p class="hint fbmsg" role="status"></p></div>';
+  }
+  return '<div class="sgroup"><div class="sname">'+T('חשבון')+'</div><p class="sdesc">'+T('מצב אורח: הנתונים נשמרים במכשיר הזה בלבד.')+'</p>'+
+    '<button type="button" class="btn" data-act="gconnect"'+(cfg?'':' disabled')+'>'+T('חבר חשבון Google')+'</button>'+
+    '<p class="sdesc">'+T(cfg?'יוצר משתמש מסונכרן בענן ומעלה אליו את הנתונים הנוכחיים.':'כניסה עם Google תהיה זמינה אחרי הגדרת Firebase.')+'</p><p class="hint" id="gMsg" role="status"></p>'+(cfg?'':fbSetupHtml())+'</div>'+backupHtml();
+}
 function renderSettings(){
   var where=T(!store?'טוען…':(store.local?'הנתונים נשמרים רק בדפדפן הזה.':'הנתונים נשמרים בענן ומסתנכרנים בין מכשירים.'));
   setBody.innerHTML=
@@ -2169,6 +2250,7 @@ function renderSettings(){
     '<div class="sgroup"><div class="sname">'+T('טיימר שעון (קיצורי דרך)')+'</div>'+
     '<div class="seg" role="group">'+[['0','כבוי'],['1','פעיל']].map(function(x){var on=(x[0]==='1')===clockMode;return '<button type="button" class="segb'+(on?' on':'')+'" data-act="clockmode" data-v="'+x[0]+'" aria-pressed="'+on+'">'+T(x[1])+'</button>';}).join('')+'</div>'+
     '<p class="sdesc mdesc" dir="auto">'+(lang==='en'?'Needs a shortcut named RestTimer: Shortcuts app, new shortcut, action Start Timer, duration = Shortcut Input, unit seconds. If it does not accept the input, add Get Numbers from Input first. For cancelling, create a second shortcut named CancelTimer with the single action Cancel Timer (Clock).':' צריך קיצור בשם RestTimer: באפליקציית קיצורי הדרך קיצור חדש, פעולה "Start Timer" (התחל טיימר), משך = "Shortcut Input" (קלט הקיצור), יחידה = שניות. אם לא מתקבל, הוסף לפניו "Get Numbers from Input". לביטול: קיצור שני בשם CancelTimer עם פעולה אחת "Cancel Timer" (Clock).')+'</p></div>'+
+    accountHtml()+
     '<div class="sgroup"><div class="sname">'+T('אחסון')+'</div><p class="sdesc">'+where+'</p></div>';
 }
 function setStep(x){
@@ -2212,20 +2294,191 @@ try{if(window.ResizeObserver) new ResizeObserver(setHH).observe(document.querySe
 applyLang();
 render();
 showScreen('list');
-(async function(){
-  var db=null;
-  try{db=(window.claude&&window.claude.use)?await window.claude.use('db'):null;}catch(e){db=null;}
-  if(db){
-    store=makeDb(db);
-    loadTimer=setTimeout(function(){setStatus('warn');},10000);
-  }else{
-    store=makeLocal();
-  }
+/* ---------- accounts: guest (this device only) or Google (cloud) ---------- */
+/* The Firebase web config is NOT stored in this repository. It is pasted once in the app (kept in this device's storage),
+   or arrives through a private link of the form  <app url>#fb=<base64 json>  (see FIREBASE_SETUP.md). */
+var FB_CONFIG={};
+function parseFbConfig(t){
+  var o={}; t=String(t||'').trim();
+  try{var j=JSON.parse(t); if(j&&typeof j==='object') o=j;}catch(e){}
+  if(!o.apiKey){var re=/([A-Za-z]\w*)\s*:\s*["']([^"']*)["']/g, m; while((m=re.exec(t))) o[m[1]]=m[2];}
+  var c={}; ['apiKey','authDomain','projectId','appId','storageBucket','messagingSenderId'].forEach(function(k){if(typeof o[k]==='string'&&o[k]) c[k]=o[k];});
+  return (c.apiKey&&c.projectId)?c:null;
+}
+function saveFbConfig(c){FB_CONFIG=c; try{localStorage.setItem('wl-fbcfg',JSON.stringify(c));}catch(e){}}
+(function(){
+  try{var st=localStorage.getItem('wl-fbcfg'); if(st){var c=parseFbConfig(st); if(c) FB_CONFIG=c;}}catch(e){}
+  try{
+    var m=/[#&]fb=([^&]+)/.exec(location.hash);
+    if(m){var c2=parseFbConfig(decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/'))))); if(c2) saveFbConfig(c2); history.replaceState(null,'',location.pathname+location.search);}
+  }catch(e){}
+})();
+function fbShareLink(){
+  var b=btoa(unescape(encodeURIComponent(JSON.stringify(FB_CONFIG)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  return location.origin+location.pathname.replace(/[^\/]*$/,'')+'#fb='+b;
+}
+function fbSetupHtml(){
+  return '<details class="fbsetup"><summary>'+T('הגדרת חיבור ל-Google (חד-פעמי)')+'</summary>'+
+    '<p class="sdesc">'+T('הדבק כאן את הגדרות Firebase. הן נשמרות רק במכשיר הזה.')+'</p>'+
+    '<textarea class="fbcfg" rows="5" dir="ltr" spellcheck="false" placeholder="{ apiKey: &quot;…&quot;, authDomain: &quot;…&quot;, projectId: &quot;…&quot;, appId: &quot;…&quot; }"></textarea>'+
+    '<button type="button" class="btn ghost" data-act="fbsave">'+T('שמור הגדרות')+'</button><p class="hint fbmsg" role="status"></p></details>';
+}
+var FB_VER='10.12.2', fbP=null, userDoc=null, SYNC_KEYS=['wl-lang','wl-method','wl-step','wl-clock','wl-rest','wl-timers'], rawSet=Storage.prototype.setItem, setPushT=null;
+function fbConfigured(){return !!(FB_CONFIG.apiKey&&FB_CONFIG.projectId);}
+function getMode(){try{return localStorage.getItem('wl-mode');}catch(e){return null;}}
+function setMode(m){try{localStorage.setItem('wl-mode',m);}catch(e){}}
+function hasLocalData(){
+  try{var w=JSON.parse(localStorage.getItem('workout-log-v3')||'[]');return (Array.isArray(w)&&w.length>0)||!!localStorage.getItem('workout-log-tpl')||!!localStorage.getItem('workout-log-lib');}catch(e){return false;}
+}
+Storage.prototype.setItem=function(k,v){rawSet.call(this,k,v); if(userDoc&&this===window.localStorage&&SYNC_KEYS.indexOf(k)>=0){clearTimeout(setPushT);setPushT=setTimeout(pushSettings,800);}};
+function pushSettings(){
+  if(!userDoc) return;
+  var o={}; SYNC_KEYS.forEach(function(k){var v=null;try{v=localStorage.getItem(k);}catch(e){} if(v!==null) o[k]=v;});
+  try{userDoc.collection('settings').doc('app').set(o,{merge:true});}catch(e){}
+}
+function loadFirebase(){
+  if(fbP) return fbP;
+  fbP=new Promise(function(res,rej){
+    var files=['app','auth','firestore'], i=0;
+    (function next(){
+      if(i>=files.length){try{var fb=window.firebase; if(!fb.apps.length) fb.initializeApp(FB_CONFIG); try{fb.firestore().enablePersistence({synchronizeTabs:true}).catch(function(){});}catch(e){} res(fb);}catch(e){fbP=null;rej(e);} return;}
+      var sc=document.createElement('script'); sc.src='https://www.gstatic.com/firebasejs/'+FB_VER+'/firebase-'+files[i++]+'-compat.js'; sc.onload=next; sc.onerror=function(){fbP=null;rej(new Error('load'));}; document.head.appendChild(sc);
+    })();
+  });
+  return fbP;
+}
+function fsDoc(fb,u){return fb.firestore().collection('users').doc(u.uid);}
+function googleSignIn(){
+  return loadFirebase().then(function(fb){
+    var prov=new fb.auth.GoogleAuthProvider();
+    return fb.auth().signInWithPopup(prov).then(function(r){return r.user;},function(e){
+      if(e&&(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment')){return fb.auth().signInWithRedirect(prov).then(function(){return new Promise(function(){});});}
+      throw e;
+    });
+  });
+}
+function cloudUser(){
+  return loadFirebase().then(function(fb){
+    return Promise.resolve(fb.auth().getRedirectResult()).catch(function(){}).then(function(){
+      return new Promise(function(res){var off=fb.auth().onAuthStateChanged(function(u){off();res(u);});});
+    });
+  });
+}
+async function pullSettings(){
+  var d=await userDoc.collection('settings').doc('app').get();
+  if(!d.exists){pushSettings();return;}
+  var cs=d.data()||{}, changed=false;
+  SYNC_KEYS.forEach(function(k){
+    if(typeof cs[k]!=='string') return;
+    var cur=null; try{cur=localStorage.getItem(k);}catch(e){}
+    if(cur!==cs[k]){try{rawSet.call(localStorage,k,cs[k]);changed=true;}catch(e){}}
+  });
+  if(changed&&!sessionStorage.getItem('wl-pulled')){sessionStorage.setItem('wl-pulled','1');location.reload();await new Promise(function(){});}
+}
+function startApp(){
+  $('welcome').hidden=true;
   store.subscribe(onData,onErr);
   if(store.subTpl) store.subTpl(applyTpl);
   if(store.subLib) store.subLib(function(list){lib=list;syncLibrary();render();renderPlan();});
   exLoad();
-})();
+}
+function showWelcome(err){
+  $('wgoogle').disabled=!fbConfigured();
+  $('wErr').textContent=err||(fbConfigured()?'':T('כניסה עם Google תהיה זמינה אחרי הגדרת Firebase.'));
+  $('wSetup').innerHTML=fbConfigured()?'':fbSetupHtml();
+  $('welcome').hidden=false; applyLang();
+}
+async function boot(){
+  var db=null;
+  try{db=(window.claude&&window.claude.use)?await window.claude.use('db'):null;}catch(e){db=null;}
+  if(db){store=makeDb(db);loadTimer=setTimeout(function(){setStatus('warn');},10000);return startApp();}
+  var mode=getMode();
+  if(!mode){if(hasLocalData()){mode='guest';setMode('guest');}else return showWelcome();}
+  if(mode==='none') return showWelcome();
+  if(mode==='google'){
+    try{
+      var fb=await loadFirebase(), u=await cloudUser();
+      if(!u){setMode('none');return showWelcome();}
+      try{localStorage.setItem('wl-email',u.email||'');}catch(e){}
+      userDoc=fsDoc(fb,u); store=makeFs(userDoc);
+      loadTimer=setTimeout(function(){setStatus('warn');},10000);
+      await pullSettings();
+      return startApp();
+    }catch(e){return showWelcome(lang==='en'?'No connection. Check the internet and try again.':'אין חיבור. בדוק את האינטרנט ונסה שוב.');}
+  }
+  store=makeLocal(); startApp();
+  try{if(navigator.storage&&navigator.storage.persist) navigator.storage.persist();}catch(e){}
+}
+/* upload the guest's data (workouts, templates, exercises, settings) to the signed-in account */
+async function migrateLocalToCloud(fb,ud,hasCloud){
+  var FV=fb.firestore.FieldValue, ps=function(k,d){try{return JSON.parse(localStorage.getItem(k)||'null')||d;}catch(e){return d;}};
+  var lw=ps('workout-log-v3',[]), lt=ps('workout-log-tpl',{}), ll=ps('workout-log-lib',{}), ops=[], base=0, haveTpl={};
+  if(hasCloud){
+    var q=await ud.collection('workouts').orderBy('n','desc').limit(1).get(); if(!q.empty) base=q.docs[0].data().n||0;
+    (await ud.collection('templates').get()).docs.forEach(function(d){haveTpl[d.id]=1;});
+  }
+  lw.sort(function(a,b){return a.n-b.n;}).forEach(function(w,i){
+    var n=hasCloud?base+i+1:w.n, id=hasCloud?'k'+String(n).padStart(3,'0'):w.id;
+    var o={n:n,kind:w.kind||'A',createdAt:w.createdAt,sets:w.sets||{}}; if(w.fin) o.fin=w.fin;
+    if(Array.isArray(w.rows)){o.rows=w.rows;o.name=w.name||'';o.sub=w.sub||'';}
+    ops.push([ud.collection('workouts').doc(id),o]);
+  });
+  Object.keys(lt).forEach(function(k){
+    var v=lt[k]; if(Array.isArray(v)) v={rows:v}; if(!v||!Array.isArray(v.rows)||haveTpl[k]) return;
+    ops.push([ud.collection('templates').doc(k),v]);
+  });
+  Object.keys(ll).forEach(function(k){
+    var e=ll[k]; if(!e||!e.key) return;
+    var o={key:e.key,name:e.name}; if(e.m) o.m=e.m;
+    if(Array.isArray(e.ids)&&e.ids.length) o.ids=FV.arrayUnion.apply(FV,e.ids);
+    ops.push([ud.collection('exercises').doc(hid(e.key)),o,{merge:true}]);
+  });
+  for(var i=0;i<ops.length;i+=400){
+    var b=fb.firestore().batch();
+    ops.slice(i,i+400).forEach(function(op){var d=JSON.parse(JSON.stringify(op[1],function(k,v){return v;})); if(op[1]&&op[1].ids&&op[1].ids.__union) d.ids=op[1].ids; if(op[2]) b.set(op[0],d,op[2]); else b.set(op[0],d);});
+    await b.commit();
+  }
+  if(!hasCloud){var so={}; SYNC_KEYS.forEach(function(k){var v=null;try{v=localStorage.getItem(k);}catch(e){} if(v!==null) so[k]=v;}); await ud.collection('settings').doc('app').set(so,{merge:true});}
+}
+async function connectGoogle(){
+  var msg=$('gMsg'); if(!fbConfigured()) return;
+  try{
+    if(msg) msg.textContent=lang==='en'?'Connecting…':'מתחבר…';
+    var u=await googleSignIn(), fb=await loadFirebase(), ud=fsDoc(fb,u);
+    var has=!(await ud.collection('workouts').limit(1).get()).empty, doMerge=true;
+    if(has) doMerge=confirm(lang==='en'?'This account already has data in the cloud.\nMerge the data on this device into it?\nOK = merge, Cancel = use the cloud data only.':'בחשבון הזה כבר יש נתונים בענן.\nלאחד אליהם את הנתונים שבמכשיר?\nאישור = איחוד, ביטול = להשתמש בנתוני הענן בלבד.');
+    if(doMerge) await migrateLocalToCloud(fb,ud,has);
+    setMode('google'); try{localStorage.setItem('wl-email',u.email||'');}catch(e){}
+    location.reload();
+  }catch(e){if(msg) msg.textContent=lang==='en'?'Could not connect. Try again.':'החיבור נכשל. נסה שוב.';}
+}
+async function googleOut(){
+  if(!confirm(lang==='en'?'Sign out? Your data stays in the cloud.':'להתנתק? הנתונים נשארים בענן.')) return;
+  try{var fb=await loadFirebase(); await fb.auth().signOut();}catch(e){}
+  setMode('none'); location.reload();
+}
+document.addEventListener('click',function(e){
+  var b=e.target.closest&&e.target.closest('[data-act]'); if(!b) return; var a=b.dataset.act;
+  if(a==='wguest'){setMode('guest');boot();}
+  else if(a==='wgoogle'){
+    $('wErr').textContent='';
+    googleSignIn().then(function(){setMode('google');boot();},function(){$('wErr').textContent=lang==='en'?'Sign-in failed. Try again.':'ההתחברות נכשלה. נסה שוב.';});
+  }
+  else if(a==='fbsave'){
+    var box=b.closest('.fbsetup'), c=parseFbConfig(box.querySelector('.fbcfg').value), mg=box.querySelector('.fbmsg');
+    if(!c){mg.textContent=lang==='en'?'Could not read the config. Paste the firebaseConfig block.':'לא הצלחתי לקרוא את ההגדרות. הדבק את בלוק firebaseConfig.';return;}
+    saveFbConfig(c); fbP=null; if($('welcome').hidden) renderSettings(); else showWelcome();
+  }
+  else if(a==='fbshare'){
+    var ml=b.parentNode.querySelector('.fbmsg'), lk=fbShareLink();
+    (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(lk):Promise.reject()).then(function(){ml.textContent=lang==='en'?'Link copied. Send it privately.':'הקישור הועתק. שלח אותו באופן פרטי.';},function(){ml.textContent=lk;});
+  }
+  else if(a==='bkexport') exportBackup();
+  else if(a==='bkimport'){var bf=$('bkFile'); bf.value=''; bf.click();}
+  else if(a==='gconnect') connectGoogle();
+  else if(a==='gout') googleOut();
+});
+boot();
 })();
 </script>
 
